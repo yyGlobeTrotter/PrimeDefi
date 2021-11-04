@@ -3,14 +3,16 @@
         "browser": true,
         "node": true,
         "es2021": true,
-        "jest": true
+        "jest/globals": true
     },
     "extends": [
         "airbnb",
-        "airbnb/hooks",
-        "eslint:recommended",
-        "plugin:react/recommended",
-        "plugin:prettier/recommended"
+		"airbnb-typescript",
+		"airbnb/hooks",
+		"plugin:jest/recommended",
+		"plugin:@typescript-eslint/eslint-recommended",
+		"plugin:@typescript-eslint/recommended",
+		"plugin:prettier/recommended"
     ],
     "parser": "@typescript-eslint/parser",
     "parserOptions": {
@@ -18,7 +20,8 @@
             "jsx": true
         },
         "ecmaVersion": 12,
-        "sourceType": "module"
+        "sourceType": "module",
+        "project": "./tsconfig.json"
     },
     "plugins": [
         "react",
@@ -33,7 +36,8 @@
         "react/button-has-type": "warn",
         "no-use-before-define": "off",
         "import/extensions": "off",
-        "@typescript-eslint/no-use-before-define": ["error"]
+        "@typescript-eslint/no-use-before-define": ["error"],
+        "prettier/prettier": "warn"
     },
     "settings": {
         "import/resolver": {
