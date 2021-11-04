@@ -1,13 +1,22 @@
-import React from 'react';
+import React, { StrictMode } from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
+import { MoralisProvider } from 'react-moralis';
+import { ChakraProvider } from "@chakra-ui/react"
 
 ReactDOM.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>,
+  <StrictMode>
+    <ChakraProvider>
+      <MoralisProvider
+        appId={process.env.REACT_APP_MORALIS_APP_ID ?? ""}
+        serverUrl={process.env.REACT_APP_MORALIS_SERVER_URL ?? ""}
+      >
+        <App />
+      </MoralisProvider>
+    </ChakraProvider>
+  </StrictMode>,
   document.getElementById('root')
 );
 
