@@ -6,6 +6,7 @@
     "@chakra-ui/react": "^1.6.12",
     "@emotion/react": "^11",
     "@emotion/styled": "^11",
+    "dotenv": "^10.0.0",
     "framer-motion": "^4",
     "moralis": "^0.0.121",
     "react": "16.11.0",
