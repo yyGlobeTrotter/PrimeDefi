@@ -6,6 +6,16 @@ The code within this folder contain the Frontend implementation for the PrimeDeF
 
 ## Table of Contents
 
+- [Pre-requisites](https://github.com/Web3-Hackers/PrimeDefi/tree/initial-fe-setup/client#table-of-contents)
+   - [Node.js](https://github.com/Web3-Hackers/PrimeDefi/tree/initial-fe-setup/client#1-nodejs)
+   - [NPM/Yarn](https://github.com/Web3-Hackers/PrimeDefi/tree/initial-fe-setup/client#2-npmyarn)
+   - [Moralis Admin Account](https://github.com/Web3-Hackers/PrimeDefi/tree/initial-fe-setup/client#3-moralis-admin-account)
+- [Getting Started](https://github.com/Web3-Hackers/PrimeDefi/tree/initial-fe-setup/client#getting-started)
+   - [Clone the Project](https://github.com/Web3-Hackers/PrimeDefi/tree/initial-fe-setup/client#1-clone-the-project)
+   - [Install Dependencies](https://github.com/Web3-Hackers/PrimeDefi/tree/initial-fe-setup/client#2-install-dependencies)
+   - [Add Environment Variables](https://github.com/Web3-Hackers/PrimeDefi/tree/initial-fe-setup/client#3-add-environment-variables)
+   - [Run the Project](https://github.com/Web3-Hackers/PrimeDefi/tree/initial-fe-setup/client#4-run-the-project)
+- [Production](https://github.com/Web3-Hackers/PrimeDefi/tree/initial-fe-setup/client#production)
 ---
 
 ### Pre-requisites
