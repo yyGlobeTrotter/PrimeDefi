@@ -1,68 +1,106 @@
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+# PrimeDeFi Client
 
-## Available Scripts
+The code within this folder contain the Frontend implementation for the PrimeDeFi dApps. This project is React based and utilize several libraries, including but not limited to Chakra UI, Moralis, and Material UI. Happy BUIDL!
 
-In the project directory, you can run:
+---
 
-### `yarn start`
+## Table of Contents
 
-Runs the app in the development mode.<br />
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+- [Pre-requisites](https://github.com/Web3-Hackers/PrimeDefi/tree/initial-fe-setup/client#table-of-contents)
+   - [Node.js](https://github.com/Web3-Hackers/PrimeDefi/tree/initial-fe-setup/client#1-nodejs)
+   - [NPM/Yarn](https://github.com/Web3-Hackers/PrimeDefi/tree/initial-fe-setup/client#2-npmyarn)
+   - [Moralis Admin Account](https://github.com/Web3-Hackers/PrimeDefi/tree/initial-fe-setup/client#3-moralis-admin-account)
+- [Getting Started](https://github.com/Web3-Hackers/PrimeDefi/tree/initial-fe-setup/client#getting-started)
+   - [Clone the Project](https://github.com/Web3-Hackers/PrimeDefi/tree/initial-fe-setup/client#1-clone-the-project)
+   - [Install Dependencies](https://github.com/Web3-Hackers/PrimeDefi/tree/initial-fe-setup/client#2-install-dependencies)
+   - [Add Environment Variables](https://github.com/Web3-Hackers/PrimeDefi/tree/initial-fe-setup/client#3-add-environment-variables)
+   - [Run the Project](https://github.com/Web3-Hackers/PrimeDefi/tree/initial-fe-setup/client#4-run-the-project)
+- [Production](https://github.com/Web3-Hackers/PrimeDefi/tree/initial-fe-setup/client#production)
+---
 
-The page will reload if you make edits.<br />
-You will also see any lint errors in the console.
+### Pre-requisites
 
-### `yarn test`
+#### 1. Node.js
 
-Launches the test runner in the interactive watch mode.<br />
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+Check whether you have Node.js in your machine with the following command, otherwise click [here](https://nodejs.org/en/) to install it.
 
-### `yarn build`
+```bash
+node -v
+```
 
-Builds the app for production to the `build` folder.<br />
-It correctly bundles React in production mode and optimizes the build for the best performance.
+#### 2. NPM/Yarn
 
-The build is minified and the filenames include the hashes.<br />
-Your app is ready to be deployed!
+If you have installed Node.js in your machine, NPM will already be installed along with it. Check whether NPM is installed within your machine with the following command.
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+```bash
+npm -v
+```
 
-### `yarn eject`
+Otherwise, if you want to use Yarn as your package manager. Go to its [official website](https://yarnpkg.com/) and follow the installation process. Once installed, check Yarn with the following command.
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+```bash
+yarn -v
+```
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+#### 3. Moralis Admin Account
 
-Instead, it will copy all the configuration files and the transitive dependencies (Webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+If you have not signed up to Moralis yet, click [here](https://admin.moralis.io/register) to register and get your free Moralis Admin account in just a few minutes!
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+---
 
-## Learn More
+### Getting Started
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+#### 1. Clone the project
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+```bash
+# Git
+git clone https://github.com/Web3-Hackers/PrimeDefi.git
 
-### Code Splitting
+# GitHub CLI
+gh repo clone Web3-Hackers/PrimeDefi
+```
 
-This section has moved here: https://facebook.github.io/create-react-app/docs/code-splitting
+#### 2. Install Dependencies
 
-### Analyzing the Bundle Size
+```bash
+# NPM
+npm i
 
-This section has moved here: https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size
+# Yarn
+yarn
+```
 
-### Making a Progressive Web App
+#### 3. Add Environment Variables
 
-This section has moved here: https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app
+Copy `.env.example` and rename it as `.env`, then fill in the following information.
 
-### Advanced Configuration
+```
+REACT_APP_MORALIS_APP_ID=xxx
+REACT_APP_MORALIS_SERVER_URL=xxx
+```
 
-This section has moved here: https://facebook.github.io/create-react-app/docs/advanced-configuration
+#### 4. Run the Project
 
-### Deployment
+```bash
+# NPM
+npm run start
 
-This section has moved here: https://facebook.github.io/create-react-app/docs/deployment
+# Yarn
+yarn start
+```
 
-### `yarn build` fails to minify
+---
 
-This section has moved here: https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify
+### Production
+
+To use the code for production, compile the build version and run the following command.
+
+```bash
+# NPM
+npm run build
+
+# Yarn
+yarn build
+```
+
+Once the building process is completed (whether locally or remotely in CI/CD), deploy the build version to your favorite hosting service.

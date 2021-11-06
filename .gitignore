@@ -416,3 +416,7 @@ API
 Training
 Blog
 About
+
+# Client Package dependencies
+yarn.lock
+package-lock.json
