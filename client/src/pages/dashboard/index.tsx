@@ -2,9 +2,11 @@ import { useState } from "react";
 import { Router, RouteComponentProps } from "@reach/router";
 import AppBar from "@mui/material/AppBar";
 import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
 import CssBaseline from "@mui/material/CssBaseline";
 import Divider from "@mui/material/Divider";
 import Drawer from "@mui/material/Drawer";
+import Grid from "@mui/material/Grid";
 import IconButton from "@mui/material/IconButton";
 import InboxIcon from "@mui/icons-material/MoveToInbox";
 import List from "@mui/material/List";
@@ -15,19 +17,34 @@ import MailIcon from "@mui/icons-material/Mail";
 import MenuIcon from "@mui/icons-material/Menu";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
+import { useMoralis } from "react-moralis";
 import Dashboard from "./Dashboard";
 import Wallet from "./Wallet";
 import CreateDeal from "./issuer/CreateDeal";
 import Bidding from "./investor/Bidding";
 import Holdings from "./investor/Holdings";
 
+const drawerWidth = 240;
+
 // eslint-disable-next-line
 const Index = (_props: RouteComponentProps): JSX.Element => {
-	const drawerWidth = 240;
-	const [mobileOpen, setMobileOpen] = useState(false);
+	const { logout } = useMoralis();
+	const [mobileOpen, setMobileOpen] = useState<boolean>(false);
 
 	const handleDrawerToggle = () => {
 		setMobileOpen(!mobileOpen);
+	};
+
+	/**
+	 * @description Handle disconnecting web3 wallet
+	 */
+	const onLogout = async () => {
+		try {
+			await logout();
+		} catch (e) {
+			// Should be replaced by error snackbar
+			console.error(e);
+		}
 	};
 
 	const drawer = (
@@ -78,9 +95,16 @@ const Index = (_props: RouteComponentProps): JSX.Element => {
 					>
 						<MenuIcon />
 					</IconButton>
-					<Typography variant="h6" noWrap component="div">
-						Responsive drawer
-					</Typography>
+					<Grid container alignItems="center">
+						<Grid item>
+							<Typography variant="h6" noWrap component="div">
+								PrimeDeFi
+							</Typography>
+						</Grid>
+					</Grid>
+					<Button color="inherit" onClick={onLogout}>
+						Logout
+					</Button>
 				</Toolbar>
 			</AppBar>
 			<Box
