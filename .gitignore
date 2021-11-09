@@ -420,3 +420,6 @@ About
 # Client Package dependencies
 yarn.lock
 package-lock.json
+
+# Avoid git-ignore public folder in client's source code
+!/client/src/Public
