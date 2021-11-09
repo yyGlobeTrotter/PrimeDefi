@@ -30,6 +30,7 @@
 			{ "extensions": [".js", ".jsx", ".ts", "tsx"] }
 		],
         "react/react-in-jsx-scope": "off",
+        "react/require-default-props": "off",
         "react/button-has-type": "warn",
         "no-use-before-define": "off",
         "import/extensions": "off",
