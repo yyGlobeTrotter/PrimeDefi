@@ -422,4 +422,4 @@ yarn.lock
 package-lock.json
 
 # Avoid git-ignore public folder in client's source code
-!/client/src/Public
+!/client/src/public
