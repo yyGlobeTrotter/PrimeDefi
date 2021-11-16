@@ -1,5 +1,5 @@
 import { FC } from "react";
-import { RouteComponentProps } from "@reach/router";
+import { navigate, RouteComponentProps } from "@reach/router";
 import BasicLayout from "../../layout/BasicLayout";
 
 const Dashboard: FC<RouteComponentProps> = () => {
@@ -7,6 +7,7 @@ const Dashboard: FC<RouteComponentProps> = () => {
 		<BasicLayout
 			title="Dashboard"
 			buttonText="Create Deal"
+			buttonOnClick={() => navigate("/deal/create")}
 			cardsArray={[
 				{ title: "Total Value Raised", subtitle: "$ 350.2 M" },
 				{ title: "Credit Rating", subtitle: "AA (Moody)" },

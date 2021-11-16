@@ -6,15 +6,24 @@ import InfoCard, { CardProps } from "../components/InfoCard";
 
 interface BasicLayoutProps {
 	title: string;
+	spacing?: number;
 	buttonText?: string;
+	buttonOnClick?: () => void;
 	cardsArray?: CardProps[];
-	children?: FC;
 }
 
 const BasicLayout: FC<BasicLayoutProps> = (props) => {
-	const { title, buttonText, cardsArray, children } = props;
+	const {
+		title,
+		spacing = 5,
+		buttonText,
+		buttonOnClick,
+		cardsArray,
+		children,
+	} = props;
+
 	return (
-		<Grid container spacing={5}>
+		<Grid container spacing={spacing}>
 			<Grid item xs={12}>
 				<Grid container justifyContent="space-between">
 					<Grid item>
@@ -22,7 +31,9 @@ const BasicLayout: FC<BasicLayoutProps> = (props) => {
 					</Grid>
 					{buttonText && (
 						<Grid item>
-							<Button variant="contained">{buttonText}</Button>
+							<Button variant="contained" onClick={buttonOnClick}>
+								{buttonText}
+							</Button>
 						</Grid>
 					)}
 				</Grid>
