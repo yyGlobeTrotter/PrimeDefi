@@ -1,3 +1,4 @@
+import { FC } from "react";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
 import Typography from "@mui/material/Typography";
@@ -7,10 +8,10 @@ export interface CardProps {
 	subtitle: string;
 }
 
-const InfoCard = (props: CardProps): JSX.Element => {
+const InfoCard: FC<CardProps> = (props) => {
 	const { title, subtitle } = props;
 	return (
-		<Card elevation={3}>
+		<Card elevation={3} sx={{ borderRadius: 3 }}>
 			<CardContent>
 				<Typography sx={{ fontSize: 14 }} color="text.secondary" gutterBottom>
 					{title}

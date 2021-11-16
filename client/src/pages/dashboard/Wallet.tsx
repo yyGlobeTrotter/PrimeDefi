@@ -1,9 +1,15 @@
+import { FC } from "react";
 import { RouteComponentProps } from "@reach/router";
 import BasicLayout from "../../layout/BasicLayout";
 
-// eslint-disable-next-line
-const Wallet = (_props: RouteComponentProps): JSX.Element => {
-	return <BasicLayout title="Wallet" buttonText="Buy Crypto" />;
+const Wallet: FC<RouteComponentProps> = () => {
+	return (
+		<BasicLayout
+			title="Wallet"
+			buttonText="Buy Crypto"
+			cardsArray={[{ title: "Balance", subtitle: "$ 1.3 B" }]}
+		/>
+	);
 };
 
 export default Wallet;

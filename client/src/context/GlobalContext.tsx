@@ -1,12 +1,8 @@
-import { createContext } from "react";
-
-interface GlobalContextProps {
-	children: JSX.Element;
-}
+import { FC, createContext } from "react";
 
 export const GlobalContext = createContext({});
 
-const GlobalContextProvider = (props: GlobalContextProps): JSX.Element => {
+const GlobalContextProvider: FC = (props) => {
 	const { children } = props;
 
 	return <GlobalContext.Provider value={{}}>{children}</GlobalContext.Provider>;

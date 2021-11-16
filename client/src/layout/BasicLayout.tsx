@@ -1,3 +1,4 @@
+import { FC } from "react";
 import Grid from "@mui/material/Grid";
 import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
@@ -7,10 +8,10 @@ interface BasicLayoutProps {
 	title: string;
 	buttonText?: string;
 	cardsArray?: CardProps[];
-	children?: JSX.Element;
+	children?: FC;
 }
 
-const BasicLayout = (props: BasicLayoutProps): JSX.Element => {
+const BasicLayout: FC<BasicLayoutProps> = (props) => {
 	const { title, buttonText, cardsArray, children } = props;
 	return (
 		<Grid container spacing={5}>
