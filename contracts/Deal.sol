@@ -1,0 +1,743 @@
+//SPDX-License-Identifier: GPL-3.0
+
+pragma solidity ^0.8.0;
+
+//import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/security/Pausable.sol";
+//import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/security/ReentrancyGuard.sol";
+import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/math/SafeMath.sol";
+import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/math/Math.sol";
+//import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/access/Ownable.sol";
+import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/utils/SafeERC20.sol";
+
+import "./DealToken.sol";
+import "./DealTokenFactory.sol";
+import "./DealTokenManager.sol";
+
+
+/**
+ * @title Deal
+ * @author 0xYue
+ * @notice This contract represents the entire deal issuance book-building process (incl creation of new deals and minting/allocation of the deal token
+ * @dev Implementation for USDC stablecoin yet to be finalized. Might need to create our own fake USDC for testing purposes
+ * @dev Oversized now!!! Must break this into a few separate contracts such as Helper functions, event interface, etc.
+ * @dev To add @param to all sub-functions
+ * @dev To implement all Ownable and Pausible functions
+ * @dev To finalize all events and Modifiers
+ * @dev To check and finalize all function visibilities
+ * @dev To implement existing issuer/investor/token name...checking at all relevant places
+ * @dev To implement more search functions
+ * @dev To use SafeMath at all places (incl ++ calculations)
+ * @dev To change to SafeERC20 functions later
+ * @dev To integrate with Chainlink oracle adaptors and keepers
+ * @dev To implement decimals to our DealToken
+ */
+//contract Deal is Ownable {
+contract Deal {
+    /// Libraries
+    using SafeERC20 for IERC20;
+    using SafeMath for uint256;
+    using SafeMath for uint;
+
+    /// PLACEHOLDER for Events - Publicize important actions to external listeners
+    event LogCreateIssuer(address indexed _issuer, string _name, string _creditRating);
+    event LogEditIssuerMetaData(address indexed _issuer, string _name, string _creditRating);
+
+    event LogCreateDealIssuance(
+        address indexed _issuer,
+        string indexed _ISIN,
+        string _dealName,
+        uint256 _initSize,
+        uint256 _minSize,
+        uint256 _faceValue,
+        uint256 _offerPrice,
+        uint _offerStartTime,
+        uint _offerCloseTime,
+        uint256 _term,
+        uint256 _interestRate,
+        uint[] _interestPaymentDates,
+        uint256 _upfrontFee
+        //uint256 _escrowRatio
+        );
+
+    event LogEditDealIssuance(
+        address indexed _issuer,
+        string indexed _ISIN,
+        string _newDealName,
+        uint256 _newInitSize,
+        uint256 _newMinSize,
+        uint256 _newOfferPrice,
+        uint _newOfferCloseTime,
+        uint256 _newTerm,
+        uint256 _newInterestRate,
+        uint[] _newInterestPaymentDates,
+        uint256 _newUpfrontFee,
+        uint256 _newEscrowRatio
+        );
+
+    event LogEditTokenMetaData(address indexed _issuer, string indexed _ISIN, string _newName);
+    event LogCreateToken(address indexed _issuer, string indexed _ISIN, string _name, string _symbol, uint256 _totalSupply);
+
+    event LogCancelDeal(address indexed _issuer, string indexed _ISIN);
+    event LogIssueNewDeal(address indexed _issuer,  string indexed _ISIN, address _token, uint256 _finalSize, address[] _investors );
+
+    event LogTransferDealToken(string indexed _ISIN, address _token, address _investorAddr, uint256 _tokenAmount);
+
+    /// This represents different state during issuing process; Certain actions are only allowed within certain state
+    enum State {
+        INACTIVE,       // before deal issuance creation, default state
+        OFFERLIVE,      // offer period has started but not closed
+        OFFERCLOSED,    // offer period has closed out but investment/tokens not allocated yet
+        ISSUED,         // investment/tokens have been allocated and official issuance started
+        CANCELLED,      // deal issuance has been cancelled due to insuffient fund raised, or other reasons
+        REDEEMED        // the end of deal lifecycle - maturity or early redemption; principle investment and any last coupons are paid out, all o/s deal tokens are destroyed
+    }
+
+    /// This represents an unique investor
+    struct Investor {
+        address addr;
+        string[] dealsBidded;  // a ventor of the deal issuance ISINs the investor has participated in bidding
+
+        uint256 totalBalance;       // in terms of stablecoin
+        uint256 totalLockedInBid;   // in terms of stablecoin
+        uint256 availBalance;       // totalBalance minus totalLockedInBid
+
+        mapping(string => bool) isOfferClosed;      // mapping deal ISIN to a boolean; "true" means that the issuance offer period is closed
+        mapping(string => bool) isBidSuccessful;    // mapping deal ISIN to a boolean; "true" means that investor'd bid to an issuance is successful
+        mapping(string => uint256) lockedInBid;     // mapping deal ISIN to investment amount the investor has allocated to that deal
+    }
+
+    /// This represents an unique issuer
+    struct Issuer {
+        address addr;
+        string name;
+        string creditRating;
+        string[] dealsIssued;    // A vector of issuance ISINs
+
+        uint256 totalIssuedAmount;
+        uint256 totalEscrowFundLockedIn;
+        uint256 totalAvailBalance;
+
+        mapping(string => uint256) finalSize;   // mapping deal ISIN to final size raised for that issuance, including escrow allocation
+        mapping(string => uint256) escrowFundLockedIn;   //mapping deal ISIN to allocated escrow fund lock-in in Issuer wallet for that particular issuance
+        mapping(string => uint256) availBalance;    //mapping deal ISIN to available balance of the Issuer wallet (finalSize - escrow at the beginning; can be zero in between payment dates; must have enough fund 5bd before next payment date)
+    }
+
+    /// This represents an unique DealToken
+    struct Token {
+        address tokenAddr;
+        address issuer;
+        string name;
+        string symbol;      // use issuance ISIN as token symbol
+        uint256 totalSupply;    // finalSize divided by facevalue
+    }
+
+    /// This represents an unique issuance
+    struct DealIssuance {
+        string ISIN;    // the 12-digit unique identifier of an issuance
+
+        string dealName;
+        uint256 initSize;   // front-end needs to pass this value in units of our stablecoin of choice
+        uint256 minSize;    // minimum launch size, same unit of measurement as above
+        uint256 faceValue;  // it represents value of 1 deal token (the min investment unit); same unit of measurement as above
+        uint256 offerPrice;     // price of the bond, typically 100% of faceValue, can also be at a premium or discount
+        uint offerStartTime;    // use deal creation time block timestamp for now
+        uint offerCloseTime;    // either a fixed date/time, or a reletive one (i.e. 5 days after offerStartTime). For now use fixed
+        uint issueDate;         // use offerCloseTime as issueDate for now, but keep the field open for issuer flexibility
+        uint256 term;           // number of seconds, minutes, hours, days, or weeks (no more years since v0.5.0 due to leap seconds concerns). For now use number of DAYS
+        uint maturityDate;      // issueDate + tenor
+        uint256 interestRate;   // either floating or fixed. Assuming fixed rate for now (i.e. 2,125 means 2.125%)
+        uint[] interestPaymentDates;    // for now start with zero-coupon bond (meaning no interim coupons but bond selling at a discount to face value); keep the field for future dev
+        uint256 upfrontFee;     // this is the fee Issuer wants to charge for the issuance (i.e. 2,000 means 2% fee of total issue size)
+        uint256 escrowRatio;   // for now use 5% of total size; later on change to more specific, i.e. 1 or 2 coupon payments equivalent
+
+        uint256 finalSize;      // this is the final issuance size, determined by min(initSize, total investor bids), and only if total investor bids >= minSize
+        uint256 totalEscrowAmount;
+
+        Token token;
+        State state;
+        bool isOfferLive;
+        bool isOfferClosed;
+
+        address issuer;
+        address[] investors;
+
+        uint256 investorCount;
+        uint256 totalInvestorBid;
+        mapping(address => bool) investorAlreadyBid;
+    }
+
+    address private owner;          // dapp owner address
+    uint256 private balance;        // balance of the Deal contract wallet
+
+    uint256 public globalFee;              // this is the fee our dapp charges; Assume a flat 5% of total issue size for now
+
+    uint256 public dealCount;       // total number of deals created in the dapp
+    mapping( string => DealIssuance ) deals;    // map out ISIN to DealIssuance struct object
+    mapping( string => bool ) isExistingISIN;   // map out ISIN to whether ISIN's been used in the dapp
+
+    uint256 public issuerCount;     // total number of issuers in the dapp
+    mapping( address => Issuer ) issuers;     // map out issuer address to Issuer struct object
+
+    uint256 public totalInvestorCount;     // total number of investors in the dApp
+    mapping( address => Investor ) investors;     // map out investor address to Investor struct object
+
+    DealTokenFactory public factory;
+    DealTokenManager public manager;
+
+    uint256 public tokenCount;
+    mapping(address => address[]) public tracker_0x_addresses;  // map out issuer address to a vector of addresses of DealTokens issued
+
+    // USD Coin tracker address on Ethereum mainnet
+    //address public constant USDC = 0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48;
+
+
+    // =========================
+    /// PLACEHOLDER for Modifiers
+    modifier isOfferLive(string memory _ISIN) {
+        require(deals[_ISIN].isOfferLive, "Issuance offer period is NOT live");
+        _;
+    }
+
+    modifier isOfferClosed(string memory _ISIN) {
+        require(deals[_ISIN].isOfferClosed, "Issuance offer period is NOT closed yet");
+        _;
+    }
+    ///...Add more modifiers here...
+
+
+    /**
+     * @notice Constructor
+     */
+    constructor() {
+        owner = msg.sender;
+        factory = new DealTokenFactory();
+        manager = new DealTokenManager();
+    }
+
+    // =========================
+    receive() payable external {
+        balance += msg.value;
+    }
+
+    /**
+     * @dev Contract Destructor - Mortal design pattern to destroy contract and remove from blockchain
+     *
+    function kill() public onlyOwner {
+        selfdestruct(address(uint160(owner()))); /// cast owner to address payable
+    }
+    */
+
+    /**
+    * @notice Create issuer & set meta data details
+    */
+    function createIssuer(string memory _name, string memory _creditRating) public {
+        Issuer storage issuer = issuers[msg.sender];
+        issuer.name = _name;
+        issuer.creditRating = _creditRating;
+
+        emit LogCreateIssuer(msg.sender, _name, _creditRating);
+    }
+
+    /**
+    * @notice Edit issuer meta data
+    */
+    function editIssuerMetaData(address _addr, string memory _newName, string memory _newCreditRating) public {
+        require(msg.sender == _addr, "DEAL:: editIssuerDetails: Caller is NOT the issuer");
+        issuers[_addr].name = _newName;
+        issuers[_addr].creditRating = _newCreditRating;
+
+        emit LogEditIssuerMetaData(_addr, _newName, _newCreditRating);
+    }
+
+    /**
+    * @notice Edit issuer issuance details after new deal offer is closed and set to launch
+    */
+    function editIssuerDetailsPostNewIssuance(string memory _ISIN, address _addr) internal {
+        //require(msg.sender == _addr, "DEAL:: editIssuerDetails: Caller is NOT the issuer");
+        DealIssuance storage deal = deals[_ISIN];
+        Issuer storage _issuer = issuers[_addr];
+
+        _issuer.dealsIssued.push() = _ISIN;
+        _issuer.totalIssuedAmount = safeAdd(_issuer.totalIssuedAmount, deal.finalSize);
+        _issuer.totalEscrowFundLockedIn = safeAdd(_issuer.totalEscrowFundLockedIn, deal.totalEscrowAmount);
+        _issuer.totalAvailBalance = safeSub(_issuer.totalIssuedAmount, _issuer.totalEscrowFundLockedIn);
+
+        _issuer.finalSize[_ISIN] = deal.finalSize;
+        _issuer.escrowFundLockedIn[_ISIN] = deal.totalEscrowAmount;
+        _issuer.availBalance[_ISIN] = deal.finalSize - deal.totalEscrowAmount;
+    }
+
+    /**
+    * @notice Get all issuer details by issuer address; must be called by issuer
+    */
+    function getAllIssuerDetailsByAddr(address _addr) public view returns(
+        string memory name,
+        string memory creditRating,
+        string[] memory dealsIssued,
+        uint256 totalIssuedAmount,
+        uint256 totalEscrowFundLockedIn,
+        uint256 totalAvailBalance)
+    {
+        require(msg.sender == _addr, "DEAL:: getAllIssuerDetailsByAddr: Caller is NOT the issuer");
+
+        Issuer storage issuer = issuers[_addr];
+        return(
+            issuer.name,
+            issuer.creditRating,
+            issuer.dealsIssued,
+            issuer.totalIssuedAmount,
+            issuer.totalEscrowFundLockedIn,
+            issuer.totalAvailBalance
+        );
+    }
+
+    /**
+    * @notice Get public issuer details by issuance ISIN
+    */
+    function getIssuerMetaDataByISIN(string memory _ISIN) public view returns(
+        string memory issuerName,
+        string memory creditRating)
+    {
+        return( issuers[deals[_ISIN].issuer].name, issuers[deals[_ISIN].issuer].creditRating );
+    }
+
+    /**
+    * @dev Get investor details - investors can view their own details via this function call
+    */
+    function getAllInvestorDetails(address _addr) public view returns(
+        string[] memory dealsBidded,
+        uint256 totalBalance,
+        uint256 totalLockedInBid,
+        uint256 availBalance)
+    {
+        require(msg.sender == _addr, "DEAL:: getAllInvestorDetails: Caller is NOT the investor");
+
+        return( investors[_addr].dealsBidded, investors[_addr].totalBalance, investors[_addr].totalLockedInBid, investors[_addr].availBalance );
+    }
+
+    /**
+    * @notice Get issuance details (state, name, dates, terms) by issuance ISIN
+    * @dev split DealIssuance getter functions into a few separate ones, otherwise stack too deep :(
+    */
+    function getIssuanceStateNameRateDatesDetailsByISIN(string memory _ISIN) public view returns(
+        State state,
+        string memory dealName,
+        uint offerStartTime,
+        uint offerCloseTime,
+        uint256 term,
+        uint256 interestRate,
+        uint[] memory interestPaymentDates)
+    {
+        DealIssuance storage deal = deals[_ISIN];
+        return(
+            deal.state,
+            deal.dealName,
+            deal.offerStartTime,
+            deal.offerCloseTime,
+            deal.term,
+            deal.interestRate,
+            deal.interestPaymentDates
+        );
+    }
+
+    /**
+    * @notice Get issuance details (size, price, fee, escrow, total invetor bid) by issuance ISIN
+    * @dev split DealIssuance getter functions into a few separate ones, otherwise stack too deep :(
+    */
+    function getIssuanceSizePriceTotalBidDetailsByISIN(string memory _ISIN) public view returns(
+        uint256 initSize,
+        uint256 minSize,
+        uint256 faceValue,
+        uint256 offerPrice,
+        uint256 upfrontFee,
+        uint256 escrowRatio,
+        uint256 totalInvestorBid)
+    {
+        DealIssuance storage deal = deals[_ISIN];
+        return(
+            deal.initSize,
+            deal.minSize,
+            deal.faceValue,
+            deal.offerPrice,
+            deal.upfrontFee,
+            deal.escrowRatio,
+            deal.totalInvestorBid
+        );
+    }
+
+    /**
+    * @notice Update details of a deal issuance after it's created & before the offer period is closed
+    * @dev For now we do NOT allow issuers to change ISIN and faceValue (to avoid stack too deep)
+    */
+    function editDealIssuance(
+        string memory _ISIN,
+        string memory _newDealName,
+        uint256 _newInitSize,
+        uint256 _newMinSize,
+        uint256 _newOfferPrice,
+        uint _newOfferCloseTime,
+        uint256 _newTerm,
+        uint256 _newInterestRate,
+        uint[] memory _newInterestPaymentDates,
+        uint256 _newUpfrontFee,
+        uint256 _newEscrowRatio
+    ) public {
+        require(msg.sender == deals[_ISIN].issuer, "DEAL:: editDealIssuance: Caller is NOT the issuer");
+        require(deals[_ISIN].isOfferLive, "DEAL:: editDealIssuance: You cannot edit an issuance when it is NOT live");
+
+        DealIssuance storage deal = deals[_ISIN];
+
+        deal.dealName = _newDealName;
+        deal.initSize = _newInitSize;
+        deal.minSize = _newMinSize;
+        deal.offerPrice = _newOfferPrice;
+        deal.offerCloseTime = _newOfferCloseTime;
+        deal.term = _newTerm;
+        deal.interestRate = _newInterestRate;
+        deal.interestPaymentDates = _newInterestPaymentDates;
+        deal.upfrontFee = _newUpfrontFee;
+        deal.escrowRatio = _newEscrowRatio;
+
+        emit LogEditDealIssuance(
+            msg.sender,
+            _ISIN,
+            _newDealName,
+            _newInitSize,
+            _newMinSize,
+            _newOfferPrice,
+            _newOfferCloseTime,
+            _newTerm,
+            _newInterestRate,
+            _newInterestPaymentDates,
+            _newUpfrontFee,
+            _newEscrowRatio
+        );
+    }
+
+    /**
+    * @notice Create token meta data (name & symbol) for a new issuance
+    */
+    function createTokenMetaData(string memory _ISIN, string memory _name) public {
+        DealIssuance storage deal = deals[_ISIN];
+        require(msg.sender == deal.issuer, "DEAL:: createTokenMetaData: Caller is NOT the issuer");
+        //require(!deal.isOfferClosed, "DEAL:: setTokenDetails: Offer period is closed ");
+
+        deal.token.issuer = msg.sender;
+        deal.token.name = _name;
+        deal.token.symbol = _ISIN;
+    }
+
+    /**
+    * @notice Get token details for the corresponding issuance
+    */
+    function getTokenDetails(string memory _ISIN) public view returns(
+        string memory tokenName,
+        string memory symbol,
+        uint256 totalSupply
+        ) {
+        return( deals[_ISIN].token.name, deals[_ISIN].token.symbol, deals[_ISIN].token.totalSupply );
+    }
+
+    /**
+    * @notice Edit token meta data for the corresponding issuance
+    */
+    function editTokenMetaData(string memory _ISIN, string memory _newName) public {
+        require(msg.sender == deals[_ISIN].issuer, "DEAL:: editTokenDetails: Caller is NOT the issuer");
+        require(!deals[_ISIN].isOfferClosed, "DEAL:: editTokenMetaData: Offer period is already closed ");
+
+        deals[_ISIN].token.name = _newName;
+        emit LogEditTokenMetaData( msg.sender, _ISIN, _newName );
+    }
+
+    // ====================================================
+    /**
+    * @notice Create a new deal issuance, set its details in storage, & offer period starts
+    * @dev Ignored escrowRatio for now, assuming a fixed 5%
+    * @dev Might need to break this into a few separate sub-functions coz stack can become too deep
+    */
+    function createDealIssuance(
+        //address _issuer,
+        string memory _ISIN,
+        string memory _dealName,
+        uint256 _initSize,
+        uint256 _minSize,
+        uint256 _faceValue,
+        uint256 _offerPrice,
+        //uint _offerStartTime,
+        uint _offerCloseTime,
+        uint256 _term,
+        uint256 _interestRate,
+        uint[] memory _interestPaymentDates,
+        uint256 _upfrontFee
+        //uint256 _escrowRatio
+        ) public {
+        DealIssuance storage deal = deals[_ISIN];
+
+        deal.issuer = msg.sender;
+        deal.ISIN = _ISIN;
+        deal.dealName = _dealName;
+        deal.initSize = _initSize;
+        deal.minSize = _minSize;
+        deal.faceValue = _faceValue;
+        deal.offerPrice = _offerPrice;
+        deal.offerStartTime = block.timestamp;  // assuming offer period starts immediately after issuer creates the new issuance
+        deal.offerCloseTime = _offerCloseTime;
+        deal.term = _term;
+        deal.interestRate = _interestRate;
+        deal.interestPaymentDates = _interestPaymentDates;
+        deal.upfrontFee = _upfrontFee;
+        deal.escrowRatio = 5;
+
+        deal.state = State.OFFERLIVE;
+        deal.isOfferLive = true;
+        dealCount++;
+
+        emit LogCreateDealIssuance(msg.sender, _ISIN, _dealName, _initSize, _minSize, _faceValue, _offerPrice, deal.offerStartTime, _offerCloseTime, _term, _interestRate, _interestPaymentDates, _upfrontFee);
+    }
+
+    /**
+    * @notice Step 1 - Close deal offering (book-building) process;
+    *         Step 2 - Decide whether to launch the official issuance period, or cancel;
+    *         Step 3 - Transfer investor fund to escrow account & the rest to issuer wallet;
+    *         Step 4 - Mint DealToken for the issuance, calculate investor allocation then allocate accordingly;
+    *         Step 5 - Update all relevant details for the issuance, the issuer, and the investors
+    * @dev TODIItem - This function needs to be called by Chainlink keepers when timestamp clicks pre-set offerCloseTime
+    * @dev TODOItem - Need to figure out USDC Kovan testnet tracker contract address for testing purposes
+    * @dev Might have to create our own fake USDC for testing purposes!
+    */
+    function closeDealOffering(string memory _ISIN) public returns(bool) {
+        // Need to revise this modifier becoz function will be called by external Chainlink keeper we set up...
+        require(msg.sender == deals[_ISIN].issuer, "DEAL:: closeDealOffering: Caller is NOT the issuer");
+        require(deals[_ISIN].isOfferLive, "DEAL:: closeDealOffering: Offer cannot be closed because it is NOT live");
+
+        DealIssuance storage deal = deals[_ISIN];
+        Issuer storage _issuer = issuers[deal.issuer];
+
+        deal.state = State.OFFERCLOSED;
+        deal.isOfferLive = false;
+        deal.isOfferClosed = true;
+
+        bool toLaunch = assessDealOfferingFinalStatus(_ISIN);
+        uint256 finalSize = deal.finalSize;
+
+        if(!toLaunch) {
+            cancelDeal(_ISIN);
+            return false;       // return false means offer is cancelled
+        } else {
+            mintToken(_ISIN, deal.issuer);
+
+            uint256 ratio = safeDiv(finalSize, deal.totalInvestorBid);
+
+            for(uint i=0; i<deal.investors.length; i++) {
+                address investorAddr = deal.investors[i];
+
+                if(finalSize < deal.totalInvestorBid) {
+                    uint256 finalAllocation = safeMul( ratio, investors[investorAddr].lockedInBid[_ISIN] );
+                    deal.totalEscrowAmount = safeAdd( deal.totalEscrowAmount, safeMul( safeDiv( deal.escrowRatio, 100), finalAllocation ));
+
+                    investors[investorAddr].lockedInBid[_ISIN] = finalAllocation;
+
+                    // adjust allocated investment amount for each investor
+                    adjustInvestorAllocation(_ISIN, finalAllocation, investorAddr);
+
+                    // deal token & investment stablecoin transfer
+                    transferStableCoin(_ISIN, investorAddr, finalAllocation);
+                    transferDealToken(_ISIN, investorAddr, finalAllocation);
+                }
+                investors[investorAddr].isOfferClosed[_ISIN] = true;
+                investors[investorAddr].isBidSuccessful[_ISIN] = true;
+            }
+
+            deal.totalInvestorBid = safeMul(ratio, deal.totalInvestorBid);
+            deal.state = State.ISSUED;
+
+            editIssuerDetailsPostNewIssuance(_ISIN, deal.issuer);
+
+            emit LogIssueNewDeal( deal.issuer, _ISIN, deal.token.tokenAddr, finalSize, deal.investors );
+
+            return true;    // return true means offer is successfully closed & deal issued
+        }
+    }
+
+    /**
+    * @notice Count total investor bids to assess whether to launch and corresponding actions
+    */
+    function assessDealOfferingFinalStatus(string memory _ISIN) internal returns(bool) {
+        if(deals[_ISIN].totalInvestorBid >= deals[_ISIN].minSize) {
+            deals[_ISIN].finalSize = Math.min(deals[_ISIN].totalInvestorBid, deals[_ISIN].initSize);
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /**
+    * @notice Adjust allocated investment amount for each investor
+    * @dev Function is called only when totalInvestorBid > finalSize
+    */
+    function adjustInvestorAllocation(string memory _ISIN, uint256 _finalAllocation, address _investorAddr) internal {
+        Investor storage investor = investors[_investorAddr];
+
+        investor.totalBalance = safeSub(investor.totalBalance, _finalAllocation);
+        investor.totalLockedInBid = safeSub(investor.totalLockedInBid, investor.lockedInBid[_ISIN]);
+        investor.availBalance = safeSub(investor.totalBalance, investor.totalLockedInBid);
+    }
+
+     /**
+    * @notice Transfer stablecoin funding from investors to issuer
+    * @dev Might need to create our own fake USDC for testing purposes!!
+    */
+    function transferStableCoin(string memory _ISIN, address _investorAddr, uint256 _allocation) internal {
+        DealIssuance storage deal = deals[_ISIN];
+        address issuer = deal.issuer;
+
+        // transfer investor fund to dapp wallet, and assuming
+        //   the owner of stablecoin tracker account has approved & given alllowance to investor wallet
+        //ERC20(USDC).transferFrom(_investorAddr, address(this), _allocation);
+    }
+
+    /**
+    * @notice Transfer allocated deal tokens to investors
+    */
+    function transferDealToken(string memory _ISIN, address _investorAddr, uint256 _allocation) internal {
+        DealIssuance storage deal = deals[_ISIN];
+
+        address tokenAddr = deal.token.tokenAddr;
+        uint256 tokenAmount = safeDiv(_allocation, deal.faceValue);
+        manager.transfer(tokenAddr, _investorAddr, tokenAmount);
+
+        emit LogTransferDealToken(_ISIN, tokenAddr, _investorAddr, tokenAmount);
+    }
+
+    /**
+    * @notice Cancel the deal issuance due to totalInvestorBid < minLaunchSize
+    */
+    function cancelDeal(string memory _ISIN) internal {
+        deals[_ISIN].state = State.CANCELLED;
+        emit LogCancelDeal( deals[_ISIN].issuer, _ISIN);
+    }
+
+    /**
+    * @notice Mint a new token for the new issuance
+    * @dev TODOItem - might need to change to private function later
+    */
+    function mintToken(string memory _ISIN, address _issuerAddr) internal {
+        require(msg.sender == _issuerAddr, "DEAL:: mintToken: Caller is NOT the issuer");
+
+        DealIssuance storage deal = deals[_ISIN];
+
+        string memory _name = deal.token.name;
+        string memory _symbol = deal.token.symbol;
+        uint256 _totalSupply = safeDiv(deal.finalSize, deal.faceValue);
+        deal.token.totalSupply = _totalSupply;
+
+        address addr = factory.createToken(_name, _symbol, _totalSupply);
+        manager.setTokenOwner(addr, address(this));
+
+        DealToken(addr).increaseAllowance(address(manager), _totalSupply);
+
+        tracker_0x_addresses[_issuerAddr].push() = addr;
+        tokenCount++;
+
+        emit LogCreateToken( _issuerAddr, _ISIN, _name, _symbol, _totalSupply );
+    }
+
+    /**
+    * @notice Investor deposit stablecoin fund (USDC) into the dapp
+    * @dev Implement USDC transfer here after getting some test USDCs
+    */
+    function investorMakeDeposit(IERC20 _stableCoin, uint256 _amount) public {
+        //ERC20(USDC).transfer(address(this), _amount);
+        Investor storage investor = investors[msg.sender];
+
+        investor.totalBalance = safeAdd( investor.totalBalance, _amount );
+        investor.availBalance = safeAdd( investor.availBalance, _amount );
+
+        totalInvestorCount++;
+        //emit LogInvestorMakeDeposit(msg.sender, _amount);
+    }
+
+    /**
+    * @notice Investor makes a bid to invest in an issuance during offer period
+    */
+    function investorMakeBid(string memory _ISIN, uint256 _bidAmount) public {
+        DealIssuance storage deal = deals[_ISIN];
+        Investor storage investor = investors[msg.sender];
+
+        require(deal.isOfferLive, "DEAL:: investorMakeBid: offer is NOT live");
+        require(!deal.investorAlreadyBid[msg.sender], "DEAL:: investorMakeBid: you have already made a bid");
+        require(_bidAmount <= investor.totalBalance, "DEAL:: investorMakeBid: insuffient fund");
+
+        deal.totalInvestorBid = safeAdd(deal.totalInvestorBid, _bidAmount);
+
+        investor.dealsBidded.push() = _ISIN;
+        investor.totalLockedInBid = safeAdd(investor.totalLockedInBid, _bidAmount);
+        investor.availBalance = safeSub(investor.totalBalance, _bidAmount);
+
+        investor.isOfferClosed[_ISIN] = false;
+        investor.isBidSuccessful[_ISIN] = false;
+        investor.lockedInBid[_ISIN] = _bidAmount;
+
+        deal.investors.push() = msg.sender;
+        deal.investorCount++;
+        totalInvestorCount++;
+        deal.investorAlreadyBid[msg.sender] = true;
+        //*** emit LogMakeBid(); ***
+    }
+
+
+    function getBidDetails(string memory _ISIN, address _addr) external {
+        //......
+    }
+
+    function investorEditBid(string memory _ISIN, address _addr) external {
+        //......
+    }
+
+    function investorCancelBid(string memory _ISIN, address _addr) external {
+        //......
+    }
+
+    function investorWithdraw(address _addr, uint256 _amount) external {
+        //......
+    }
+
+    /***
+    function issuerWithdraw(address payable _issuerExternalAddr, string memory _ISIN, uint256 _amount) public {
+        require(msg.sender == deals[_ISIN].issuer, "DEAL:: issuerWithdrawFund: Caller is NOT the issuer");
+        require(_amount <= issuers[msg.sender][_ISIN].availableBalance, "DEAL:: issuerWithdrawFund: Not enough available fund");
+
+        issuers[msg.sender][_ISIN].availableBalance -= _amount;
+        _issuerExternalAddr.transfer(_amount);
+    } */
+
+/// ================================================
+    ///*** Helper functions; To be moved to a separate Helper contract ***
+    function safeAdd(uint256 _a, uint256 _b) internal pure returns(uint256) {
+        return SafeMath.add(_a, _b);
+    }
+
+    function safeSub(uint256 _a, uint256 _b) internal pure returns(uint256) {
+        return SafeMath.sub(_a, _b);
+    }
+
+    function safeMul(uint256 _a, uint256 _b) internal pure returns(uint256) {
+        return SafeMath.mul(_a, _b);
+    }
+
+    function safeDiv(uint256 _a, uint256 _b) internal pure returns(uint256) {
+        return SafeMath.div(_a, _b);
+    }
+
+
+/// ===============================================
+/**
+    function issuerTopUpEscrow(string memory _ISIN) public {}
+
+    function payInterimCoupon()
+
+    function redeemAtMaturity()
+
+    function handleDefaultEvent()
+*/
+}
