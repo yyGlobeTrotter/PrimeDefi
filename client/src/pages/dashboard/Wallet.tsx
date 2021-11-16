@@ -7,6 +7,7 @@ const Wallet: FC<RouteComponentProps> = () => {
 		<BasicLayout
 			title="Wallet"
 			buttonText="Buy Crypto"
+			buttonOnClick={() => {}}
 			cardsArray={[{ title: "Balance", subtitle: "$ 1.3 B" }]}
 		/>
 	);
