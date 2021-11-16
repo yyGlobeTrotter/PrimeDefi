@@ -1,7 +1,14 @@
-import { Router, RouteComponentProps } from "@reach/router";
+import { useEffect } from "react";
+import {
+	Router,
+	RouteComponentProps,
+	useLocation,
+	navigate,
+} from "@reach/router";
 import Box from "@mui/material/Box";
 import CssBaseline from "@mui/material/CssBaseline";
 import Toolbar from "@mui/material/Toolbar";
+import { useMoralis } from "react-moralis";
 import Dashboard from "./Dashboard";
 import Wallet from "./Wallet";
 import CreateDeal from "./issuer/CreateDeal";
@@ -13,6 +20,15 @@ const drawerWidth = 240;
 
 // eslint-disable-next-line
 const Index = (_props: RouteComponentProps): JSX.Element => {
+	const { isAuthenticated } = useMoralis();
+	const { pathname } = useLocation();
+
+	useEffect(() => {
+		if (isAuthenticated && pathname === "/") {
+			navigate("/dashboard");
+		}
+	}, [isAuthenticated, pathname]);
+
 	return (
 		<Box sx={{ display: "flex" }}>
 			<CssBaseline />
@@ -21,7 +37,7 @@ const Index = (_props: RouteComponentProps): JSX.Element => {
 				component="main"
 				sx={{
 					flexGrow: 1,
-					p: 3,
+					p: 5,
 					width: { sm: `calc(100% - ${drawerWidth}px)` },
 				}}
 			>
