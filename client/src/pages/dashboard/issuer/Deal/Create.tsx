@@ -12,12 +12,23 @@ const CreateDeal: FC<RouteComponentProps> = () => {
 		<BasicLayout title="Create Deal" spacing={3}>
 			<Grid container spacing={3}>
 				{createDealTextFields.map((field: CreateDealTextFieldsType) => {
-					const { title, disabled, subtitle, placeholder, xs, sm, md, lg, xl } =
-						field;
+					const {
+						title,
+						name,
+						disabled,
+						subtitle,
+						placeholder,
+						xs,
+						sm,
+						md,
+						lg,
+						xl,
+					} = field;
 					return (
 						<Grid item xs={xs} sm={sm} md={md} lg={lg} xl={xl}>
 							<Input
 								title={title}
+								name={name}
 								disabled={disabled}
 								subtitle={subtitle}
 								placeholder={placeholder}

@@ -5,6 +5,7 @@ import Grid from "@mui/material/Grid";
 
 interface CustomInputProps {
 	title: string | number;
+	name: string;
 	disabled?: boolean;
 	subtitle?: string | number;
 	placeholder?: string;
@@ -14,6 +15,7 @@ interface CustomInputProps {
 const CustomInput: FC<CustomInputProps> = (props) => {
 	const {
 		title,
+		name,
 		disabled = false,
 		subtitle = "",
 		placeholder = "",
@@ -29,6 +31,7 @@ const CustomInput: FC<CustomInputProps> = (props) => {
 			</Grid>
 			<Grid item>
 				<TextField
+					name={name}
 					fullWidth
 					disabled={disabled}
 					placeholder={placeholder}
