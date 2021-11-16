@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { FC, useState } from "react";
 import AppBar from "@mui/material/AppBar";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -13,7 +13,12 @@ import InnerDrawer from "./InnerDrawer";
 
 const drawerWidth = 240;
 
-const AppBarIndex = (): JSX.Element => {
+interface AppBarIndexProps {
+	pathname: string;
+}
+
+const AppBarIndex: FC<AppBarIndexProps> = (props) => {
+	const { pathname } = props;
 	const { logout } = useMoralis();
 	const [mobileOpen, setMobileOpen] = useState<boolean>(false);
 
@@ -88,7 +93,7 @@ const AppBarIndex = (): JSX.Element => {
 						},
 					}}
 				>
-					<InnerDrawer />
+					<InnerDrawer pathname={pathname} />
 				</Drawer>
 				<Drawer
 					variant="permanent"
@@ -101,7 +106,7 @@ const AppBarIndex = (): JSX.Element => {
 					}}
 					open
 				>
-					<InnerDrawer />
+					<InnerDrawer pathname={pathname} />
 				</Drawer>
 			</Box>
 		</>

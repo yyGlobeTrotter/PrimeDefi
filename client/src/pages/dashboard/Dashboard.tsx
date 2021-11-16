@@ -1,8 +1,8 @@
+import { FC } from "react";
 import { RouteComponentProps } from "@reach/router";
 import BasicLayout from "../../layout/BasicLayout";
 
-// eslint-disable-next-line
-const Dashboard = (_props: RouteComponentProps): JSX.Element => {
+const Dashboard: FC<RouteComponentProps> = () => {
 	return (
 		<BasicLayout
 			title="Dashboard"

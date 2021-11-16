@@ -1,23 +1,29 @@
+import { FC } from "react";
 import { RouteComponentProps } from "@reach/router";
-import { SimpleGrid, Box } from "@chakra-ui/react";
+import Grid from "@mui/material/Grid";
 import Input from "../../../components/Input";
 import createDealTextFields, {
 	CreateDealTextFieldsType,
 } from "../../../list/createDeal";
 
-// eslint-disable-next-line
-const CreateDeal = (_props: RouteComponentProps): JSX.Element => {
+const CreateDeal: FC<RouteComponentProps> = () => {
 	return (
-		<SimpleGrid minChildWidth="200px" spacing="40px">
+		<Grid container spacing={3}>
 			{createDealTextFields.map((field: CreateDealTextFieldsType) => {
-				const { title } = field;
+				const { title, disabled, subtitle, placeholder, xs, sm, md, lg, xl } =
+					field;
 				return (
-					<Box height="80px">
-						<Input title={title} />
-					</Box>
+					<Grid item xs={xs} sm={sm} md={md} lg={lg} xl={xl}>
+						<Input
+							title={title}
+							disabled={disabled}
+							subtitle={subtitle}
+							placeholder={placeholder}
+						/>
+					</Grid>
 				);
 			})}
-		</SimpleGrid>
+		</Grid>
 	);
 };
 

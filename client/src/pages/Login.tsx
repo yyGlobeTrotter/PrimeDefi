@@ -1,7 +1,7 @@
+import { FC } from "react";
 import { RouteComponentProps } from "@reach/router";
 
-// eslint-disable-next-line
-const Login = (_props: RouteComponentProps): JSX.Element => {
+const Login: FC<RouteComponentProps> = () => {
 	return <></>;
 };
 

@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { FC, useMemo } from "react";
 import Divider from "@mui/material/Divider";
 import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
@@ -11,8 +11,13 @@ import AppBarList, {
 	AppBarMenuOptionType,
 } from "../../list/appbar";
 
-const InnerDrawer = (): JSX.Element => {
-	const ROLE = "INVESTOR";
+interface InnerDrawerProps {
+	pathname: string;
+}
+
+const InnerDrawer: FC<InnerDrawerProps> = (props) => {
+	const { pathname } = props;
+	const ROLE = "ISSUER";
 	const AppBarListByRole = useMemo(
 		() =>
 			AppBarList.find(
@@ -29,7 +34,12 @@ const InnerDrawer = (): JSX.Element => {
 				{AppBarListByRole.menu.map((menu: AppBarMenuContentType) => {
 					const { id, name, link, icon: Icon } = menu;
 					return (
-						<ListItem button key={id} onClick={() => navigate(link)}>
+						<ListItem
+							selected={pathname === link}
+							button
+							key={id}
+							onClick={() => navigate(link)}
+						>
 							<ListItemIcon>
 								<Icon size="1.5em" />
 							</ListItemIcon>

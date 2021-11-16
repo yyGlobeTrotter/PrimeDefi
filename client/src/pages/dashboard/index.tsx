@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { FC, useEffect } from "react";
 import {
 	Router,
 	RouteComponentProps,
@@ -18,8 +18,7 @@ import AppBar from "../../components/AppBar";
 
 const drawerWidth = 240;
 
-// eslint-disable-next-line
-const Index = (_props: RouteComponentProps): JSX.Element => {
+const Index: FC<RouteComponentProps> = () => {
 	const { isAuthenticated } = useMoralis();
 	const { pathname } = useLocation();
 
@@ -32,7 +31,7 @@ const Index = (_props: RouteComponentProps): JSX.Element => {
 	return (
 		<Box sx={{ display: "flex" }}>
 			<CssBaseline />
-			<AppBar />
+			<AppBar pathname={pathname} />
 			<Box
 				component="main"
 				sx={{
