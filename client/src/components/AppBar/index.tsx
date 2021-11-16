@@ -32,6 +32,7 @@ const AppBarIndex = (): JSX.Element => {
 			await logout();
 		} catch (e) {
 			// Should be replaced by error snackbar
+			// eslint-disable-next-line
 			console.error(e);
 		}
 	};
@@ -62,7 +63,7 @@ const AppBarIndex = (): JSX.Element => {
 							</Typography>
 						</Grid>
 					</Grid>
-					<Button color="inherit" onClick={onLogout}>
+					<Button color="inherit" variant="outlined" onClick={onLogout}>
 						Logout
 					</Button>
 				</Toolbar>
