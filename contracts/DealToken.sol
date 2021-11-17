@@ -2,7 +2,8 @@
 
 pragma solidity ^0.8.0;
 
-import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+
 //import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/math/SafeMath.sol";
 
 /**
@@ -30,7 +31,12 @@ contract DealToken is ERC20 {
      * @param _theSymbol The symbol of the new issuance
      * @param _totalSupply Final number of tokens to be minted
      */
-    constructor(address _owner, string memory _theName, string memory _theSymbol, uint256 _totalSupply) ERC20(_theName, _theSymbol) {
+    constructor(
+        address _owner,
+        string memory _theName,
+        string memory _theSymbol,
+        uint256 _totalSupply
+    ) ERC20(_theName, _theSymbol) {
         _mint(_owner, _totalSupply);
     }
 }
