@@ -1,0 +1,23 @@
+{
+  "name": "PrimeDefi",
+  "version": "1.0.0",
+  "main": "truffle-config.js",
+  "repository": "git@github.com:Web3-Hackers/PrimeDefi.git",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "compile": "truffle compile",
+    "test": "truffle test",
+    "migrate": "truffle migrate",
+    "develop": "truffle develop",
+    "console": "truffle console"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^4.3.3"
+  },
+  "devDependencies": {
+    "@truffle/hdwallet-provider": "^1.6.0",
+    "dotenv": "^10.0.0",
+    "truffle-plugin-verify": "^0.5.18"
+  }
+}
