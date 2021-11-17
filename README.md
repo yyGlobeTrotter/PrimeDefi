@@ -80,35 +80,124 @@ This contract is a child of OpenZepplin's `Ownable.sol` contract.
 
 ## How to Run this DApp
 
-### Technical Requirements to Run the Project Locally
+### Pre-requisites
 
-- Truffle v[X] (core: [X])
-- Solidity - [X] (solc-js)
-- Node v[X]
-- [etc etc etc]
 
-### To Compile and Test Solidity Contract Locally
+#### 1. Node.js
 
-1. Navigate to the root directory
-2. Run `yarn install` for OpenZepplin dependencies
-3. Run `truffle compile`
-4. Run `truffle test`
+Check whether you have Node.js in your machine with the following command, otherwise click [here](https://nodejs.org/en/) to install it.
 
-### To Run this DApp from a Web3-enabled Browser and connect with a Blockchain Testnet
+```bash
+node -v
+```
 
-*MetaMask is required to connect this project to a Web3-enabled browser*
-*An INFURA Project ID is required to connect this project to the Ethereum networks such as Rinkeby Testnet*
+#### 2. NPM/Yarn
 
-Frontend is connected to the contract deployed to **Kovan** Testnet, address `0x[xxxxxxxx......]`
+If you have installed Node.js in your machine, NPM will already be installed along with it. Check whether NPM is installed within your machine with the following command.
 
-1. Create a `.env` file and save it in the project root directory
-2. The format of the `env` file should look like this:
-  INFURA_PROJECT_ID=<*Your own project id*>
-  MNEMONIC="<*Your own 12-words MetaMask mnemonic*>"
-3. Navigate to `/client` folder
-4. Run `yarn install` or `npm install` to install all client-side dependencies such as a local lite-server.
-5. Run `yarn start` or `npm run start` to start the server, it will automatically open up a browser page.
-6. Follow the directions on User Dashboard to run through different actions and see results
+```bash
+npm -v
+```
+
+Otherwise, if you want to use Yarn as your package manager. Go to its [official website](https://yarnpkg.com/) and follow the installation process. Once installed, check Yarn with the following command.
+
+```bash
+yarn -v
+```
+
+#### 3. Truffle
+
+Check whether you have `truffle` in your machine with the following command.
+
+```bash
+truffle version
+```
+
+Otherwise, use the following command to install the `truffle` CLI globally into your machine.
+
+```bash
+# NPM
+npm i -g truffle
+
+# Yarn
+yarn global add truffle
+```
+
+#### 4. Solidity (solc-js)
+
+If you installed truffle, it should come with `solc-js` by default. As an additional tool, install `Solidity` and `Solidity Extended` VSCode Plugin by `Juan Blanco` and `beaugunderson`, respectively.
+
+
+#### 5. Moralis Admin Account
+
+If you have not signed up to Moralis yet, click [here](https://admin.moralis.io/register) to register and get your free Moralis Admin account in just a few minutes!
+
+#### 6. Metamask
+
+If you have not installed Metamask in your browser, click [here](https://metamask.io/download.html) and follow the instruction to complete the installation process.
+
+### Getting Started
+ 
+#### 1. Install dependencies
+
+```bash
+# NPM
+npm i
+
+# Yarn
+yarn
+```
+#### 2. Add Environment Variables
+
+Copy `.env.example` and rename it `.env` and fill in the following variables
+
+```
+ETHERSCAN_API_KEY=xxx
+MORALIS_SPEEDY_NODES_KEY=xxx
+ARCHIVE=xxx
+```
+
+#### 3. Compile the project
+
+```bash
+# NPM
+npm run compile
+
+# Yarn
+yarn compile
+```
+
+#### 4. Test the project
+
+```bash
+# NPM
+npm run test
+
+# Yarn
+yarn test
+```
+
+### Development
+
+#### 1. Deploy to Testnet
+
+In order to deploy your smart contracts to the test network, make sure that your mnemonics in `.secret` and `MORALIS_SPEEDY_NODES_KEY` in `.env` defined. Then, deploy your contract to the available network defined in `truffle.config.js`
+
+```
+yarn migrate --network kovan
+```
+
+#### 2. Running the Frontend React App
+
+First, follow the setup guideline for the Frontend app [here](https://github.com/Web3-Hackers/PrimeDefi/blob/master/client/README.md). Then, navigate to `/client` and run the following command.
+
+```bash
+# NPM
+npm run start
+
+# Yarn
+yarn start
+```
 
 ## Tools/Libraries Used to Build/Test this Project
 
