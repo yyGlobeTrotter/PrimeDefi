@@ -1,0 +1,18 @@
+{
+  "name": "PrimeDefi",
+  "version": "1.0.0",
+  "main": "truffle-config.js",
+  "repository": "git@github.com:Web3-Hackers/PrimeDefi.git",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "compile": "truffle compile",
+    "test": "truffle test",
+    "migrate": "truffle migrate",
+    "develop": "truffle develop",
+    "console": "truffle console"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^4.3.3"
+  }
+}
