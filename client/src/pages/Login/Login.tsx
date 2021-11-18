@@ -3,42 +3,42 @@ import {
 	Center,
 	Image,
 	Flex,
-	FormControl,
-	Radio,
-	RadioGroup,
 	Heading,
-	Stack,
 	ChakraProvider,
 } from "@chakra-ui/react";
-import Button from "@mui/material/Button";
 import { FaFileInvoiceDollar } from "react-icons/fa";
 import { Formik, Field, Form, FormikHelpers } from "formik";
 import { useMoralis } from "react-moralis";
 import Box from "@mui/material/Box";
-import Modal from "@mui/material/Modal";
-import Typography from "@mui/material/Typography";
+import Button from "@mui/material/Button";
 import CardMedia from "@mui/material/CardMedia";
+import FormControl from '@mui/material/FormControl';
+import FormControlLabel from '@mui/material/FormControlLabel';
 import LoadingButton from "@mui/lab/LoadingButton";
+import Modal from "@mui/material/Modal";
+import Radio from '@mui/material/Radio';
+import RadioGroup from '@mui/material/RadioGroup';
+import Stack from "@mui/material/Stack";
+import Typography from "@mui/material/Typography";
 import { useState } from "react";
 import RegisterModal from "./RegisterModal";
-import theme from "../../chakraTheme";
 
 /* eslint react/prop-types: 0 */
-/* eslint react/no-unused-prop-types: 0 */
 /* eslint react/no-unused-prop-types: 0 */
 /* eslint jsx-a11y/label-has-associated-control: 0 */
 /* eslint react/jsx-props-no-spreading: 0 */
 // eslint-disable-next-line
 const Login = (_props: RouteComponentProps): JSX.Element => {
 	interface Values {
-		is_investor: boolean;
+		is_investor: string;
 	}
-	const { authenticate, logout, Moralis, isAuthenticated } = useMoralis();
+	const { authenticate, Moralis } = useMoralis();
 	const [isNewUser, setIsNewUser] = useState(false);
+	const [isInvestor, setIsInvestor] = useState(false);
 	const handleClose = () => setIsNewUser(false);
 	return (
 		<>
-			<ChakraProvider theme={theme} resetCSS={false}>
+			<ChakraProvider resetCSS={false}>
 				<Flex
 					direction={{
 						lg: "row",
@@ -94,7 +94,7 @@ const Login = (_props: RouteComponentProps): JSX.Element => {
 
 						<Formik
 							initialValues={{
-								is_investor: false,
+								is_investor: "",
 							}}
 							onSubmit={async (
 								values: Values,
@@ -114,6 +114,7 @@ const Login = (_props: RouteComponentProps): JSX.Element => {
 								// 	console.log("logging out");
 								// 	logout();
 								// }
+								setIsInvestor(values.is_investor === "true");
 								setIsNewUser(true);
 								setSubmitting(false);
 							}}
@@ -122,31 +123,24 @@ const Login = (_props: RouteComponentProps): JSX.Element => {
 								<Form>
 									<Field name="is_investor">
 										{({ field, form }: { field: any; form: any }) => (
-											<FormControl
-												isInvalid={form.errors.name && form.touched.name}
-											>
+											<FormControl component="fieldset"  sx={{display: "block"}}>
 												<RadioGroup
-													key="is_investor"
-													id="is_investor"
-													onChange={(e) => {
-														form.setFieldValue("is_investor", e);
-														const event = {
-															target: {
-																name: "is_investor",
-																value: e,
-															},
-														};
-													}}
+													name="controlled-radio-buttons-group"
 													value={field.value}
+													onChange={(e) => {
+														form.setFieldValue("is_investor", e.target.value);
+													}}
 												>
-													<Stack direction="column" spacing="24px">
-														<Radio value="true">
-															{" "}
-															<FaFileInvoiceDollar />
-															Investor
-														</Radio>
-														<Radio value="false">Issuer</Radio>
-													</Stack>
+													<FormControlLabel
+														value="true"
+														control={<Radio />}
+														label="Investor"
+													/>
+													<FormControlLabel
+														value="false"
+														control={<Radio />}
+														label="Issuer"
+													/>
 												</RadioGroup>
 											</FormControl>
 										)}
@@ -169,25 +163,32 @@ const Login = (_props: RouteComponentProps): JSX.Element => {
 						</Formik>
 					</Flex>
 				</Flex>
-				<Modal open={isNewUser} onClose={handleClose}>
-					<Box
-						sx={{
-							position: "absolute",
-							top: "50%",
-							left: "50%",
-							transform: "translate(-50%, -50%)",
-							width: 500,
-							height: 700,
-							bgcolor: "background.paper",
-							border: "2px solid #000",
-							boxShadow: 24,
-							p: 4,
-						}}
-					>
+			</ChakraProvider>
+			<Modal open={isNewUser} onClose={handleClose}>
+				<Box
+					sx={{
+						position: "absolute",
+						top: "50%",
+						left: "50%",
+						transform: "translate(-50%, -50%)",
+						width: "30vw",
+						maxWidth: 1000,
+						height: 550,
+						bgcolor: "background.paper",
+						border: "2px solid #000",
+						boxShadow: 24,
+						p: 4,
+					}}
+				>
+					<Stack alignItems="center">
 						<Typography id="modal-modal-title" variant="h6" component="h2">
 							UNREGISTERED ACCOUNT
 						</Typography>
-						<CardMedia component="img" image="warning.gif" />
+						<CardMedia
+							component="img"
+							image="warning.gif"
+							sx={{ width: 300 }}
+						/>
 						<Typography id="modal-modal-description" sx={{ mt: 2 }}>
 							Looks like this wallet (
 							{Moralis.User.current()?.attributes.ethAddress}) hasn’t registered
@@ -205,7 +206,10 @@ const Login = (_props: RouteComponentProps): JSX.Element => {
 								paddingBottom: "1rem",
 							}}
 						>
-							<RegisterModal />
+							<RegisterModal
+								address={Moralis.User.current()?.attributes.ethAddress}
+								isInvestor={isInvestor}
+							/>
 							<Button
 								onClick={handleClose}
 								sx={{ backgroundColor: "red", color: "white" }}
@@ -213,9 +217,9 @@ const Login = (_props: RouteComponentProps): JSX.Element => {
 								NO
 							</Button>
 						</Box>
-					</Box>
-				</Modal>
-			</ChakraProvider>
+					</Stack>
+				</Box>
+			</Modal>
 		</>
 	);
 };
