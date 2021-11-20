@@ -1,5 +1,8 @@
+import MoralisType from "moralis";
+import { useNavigate } from "@reach/router";
 import { useFormik } from "formik";
 import { useState } from "react";
+import { useWeb3ExecuteFunction } from "react-moralis";
 import Button from "@mui/material/Button";
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
@@ -7,23 +10,66 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
 import FormControl from "@mui/material/FormControl";
+import Snackbar from "@mui/material/Snackbar";
 import Grid from "@mui/material/Grid";
 import InputLabel from "@mui/material/InputLabel";
 import MenuItem from "@mui/material/MenuItem";
 import Select from "@mui/material/Select";
 import TextField from "@mui/material/TextField";
+import Deal from "../../contracts/Deal.json";
+import Alert from "../../components/alert";
 
 /* eslint react/jsx-curly-brace-presence: 0 */
+/* eslint react/jsx-props-no-spreading: 0 */
+// /* eslint jsx-a11y\label-has-associated-control: 0 */
 // eslint-disable-next-line
 interface RegisterInfo {
 	address: string;
 	isInvestor: boolean;
+	Moralis: MoralisType;
 }
-const RegisterModal = ({ address, isInvestor }: RegisterInfo): JSX.Element => {
+
+const RegisterModal = ({
+	address,
+	isInvestor,
+	Moralis,
+}: RegisterInfo): JSX.Element => {
+	const navigate = useNavigate();
 	const [open, setOpen] = useState(false);
+	const [transactionStatus, setTransactionStatus] = useState({
+		transactionCompleted: false,
+		isSuccess: false,
+		message: "",
+	});
 	const handleOpen = () => setOpen(true);
 	const handleClose = () => setOpen(false);
+	const [documents, setDocuments] = useState(false);
+	const handleDocuments = (e: any) => setDocuments(e.target.files);
+	const { data, error, fetch, isFetching, isLoading } =
+		useWeb3ExecuteFunction();
+	// console.log(data);
+	// if(!isFetching) {
+	// 	console.log(error);
+	// 	console.log(data);
+	// }
+	// else {
+	// 	console.log(false);
+	// }
 
+	const closeSnackbar = () => {
+		if (transactionStatus.isSuccess) {
+			if (isInvestor) {
+				navigate("/dashboard");
+			} else {
+				navigate("/issuer");
+			}
+		}
+		setTransactionStatus({
+			transactionCompleted: false,
+			isSuccess: false,
+			message: "",
+		});
+	};
 	const formik = useFormik({
 		initialValues: {
 			address,
@@ -33,11 +79,48 @@ const RegisterModal = ({ address, isInvestor }: RegisterInfo): JSX.Element => {
 			representativeAddress: "",
 			creditRating: "",
 		},
-		onSubmit: (values) => {
-			alert(JSON.stringify(values, null, 2));
+		onSubmit: async (values) => {
+			const User = Moralis.Object.extend("_User");
+			const query = new Moralis.Query(User);
+			query.equalTo("ethAddress", values.address);
+			const object = await query.first();
+			if (object) {
+				object.set("holdingName", values.name);
+				object.set("representativeName", values.representativeName);
+				object.set("representativeContact", values.representativeContact);
+				object.set("representativeAddress", values.representativeAddress);
+				object.set("creditRating", values.creditRating);
+				object.save();
+				fetch({
+					onSuccess: (results) => {
+						setTransactionStatus({
+							transactionCompleted: true,
+							isSuccess: true,
+							message:
+								"Transaction success! Check your wallet for latest transaction status",
+						});
+					},
+					onError: (errors) => {
+						setTransactionStatus({
+							transactionCompleted: true,
+							isSuccess: false,
+							message:
+								"Transaction failed! Check your wallet for latest transaction status",
+						});
+					},
+					params: {
+						abi: Deal.abi,
+						contractAddress: "0x32e74efb67ba4c8d9ef57be37944ebed22c253d1",
+						functionName: "createIssuer",
+						params: {
+							_name: `${values.name} - ${values.representativeName}`,
+							_creditRating: values.creditRating,
+						},
+					},
+				});
+			}
 		},
 	});
-
 	return (
 		<>
 			<Button
@@ -122,6 +205,7 @@ const RegisterModal = ({ address, isInvestor }: RegisterInfo): JSX.Element => {
 										value={formik.values.creditRating}
 										label="Credit Rating"
 										onChange={formik.handleChange}
+										sx={{ marginBottom: 2 }}
 									>
 										<MenuItem value="AAA">AAA</MenuItem>
 										<MenuItem value="AA1">AA1</MenuItem>
@@ -146,6 +230,18 @@ const RegisterModal = ({ address, isInvestor }: RegisterInfo): JSX.Element => {
 										<MenuItem value="C">C</MenuItem>
 									</Select>
 								</FormControl>
+								<label htmlFor="contained-button-file">
+									<input
+										id="contained-button-file"
+										multiple
+										type="file"
+										onChange={handleDocuments}
+										style={{display: 'none'}}
+									/>
+									<Button variant="contained" component="span">
+										Upload KYC Documents
+									</Button>
+								</label>
 							</DialogContentText>
 						</DialogContent>
 						<DialogActions>
@@ -154,6 +250,18 @@ const RegisterModal = ({ address, isInvestor }: RegisterInfo): JSX.Element => {
 					</form>
 				</Dialog>
 			) : null}
+			<Snackbar
+				open={transactionStatus.transactionCompleted}
+				autoHideDuration={transactionStatus.isSuccess ? null : 6000}
+				onClose={closeSnackbar}
+			>
+				<Alert
+					onClose={closeSnackbar}
+					severity={transactionStatus.isSuccess ? "success" : "error"}
+				>
+					{transactionStatus.message}
+				</Alert>
+			</Snackbar>
 		</>
 	);
 };

@@ -1,4 +1,4 @@
-import { RouteComponentProps } from "@reach/router";
+import { useNavigate, RouteComponentProps } from "@reach/router";
 import { Center, Image, Flex, Heading, ChakraProvider } from "@chakra-ui/react";
 import { FaFileInvoiceDollar } from "react-icons/fa";
 import { Formik, Field, Form, FormikHelpers } from "formik";
@@ -11,21 +11,15 @@ import DialogTitle from "@mui/material/DialogTitle";
 import FormControl from "@mui/material/FormControl";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import LoadingButton from "@mui/lab/LoadingButton";
-import MuiAlert, { AlertProps } from "@mui/material/Alert";
 import Radio from "@mui/material/Radio";
 import RadioGroup from "@mui/material/RadioGroup";
 import Snackbar from "@mui/material/Snackbar";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import { forwardRef, useState } from "react";
+import { useState } from "react";
 import RegisterModal from "./RegisterModal";
+import Alert from "../../components/alert";
 
-const Alert = forwardRef<HTMLDivElement, AlertProps>(function Alert(
-	props,
-	ref,
-) {
-	return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
-});
 
 /* eslint react/prop-types: 0 */
 /* eslint react/no-unused-prop-types: 0 */
@@ -36,12 +30,13 @@ const Login = (_props: RouteComponentProps): JSX.Element => {
 	interface Values {
 		is_investor: string;
 	}
-	const { authenticate, Moralis } = useMoralis();
+	const navigate  = useNavigate();
+	const { authenticate, Moralis, isInitialized } = useMoralis();
 	const [isNewUser, setIsNewUser] = useState(false);
 	const [isInvestor, setIsInvestor] = useState(false);
 	const [isMismatchedRole, setIsMismatchedRole] = useState(false);
 	const handleClose = () => setIsNewUser(false);
-
+	
 	return (
 		<>
 			<ChakraProvider resetCSS={false}>
@@ -88,14 +83,14 @@ const Login = (_props: RouteComponentProps): JSX.Element => {
 							</Heading>
 						</Center>
 						<Center mt="20vh">
-							{/* <Heading
+							<Heading
 								size="lg"
 								mb={5}
 								fontWeight="semibold"
 								textAlign="center"
 							>
 								Login As
-							</Heading> */}
+							</Heading>
 						</Center>
 
 						<Formik
@@ -117,17 +112,21 @@ const Login = (_props: RouteComponentProps): JSX.Element => {
 									}
 								} else if (Moralis.User.current()) {
 									if (
-										Moralis.User.current()?.attributes.is_investor ===
+										Moralis.User.current()?.attributes.is_investor.toString() ===
 										values.is_investor
 									) {
-										// redirect user to dashboard
+										if(values.is_investor) {
+											navigate("/dashboard");
+										}
+										else {
+											navigate("/issuer");
+										}
 									} else {
 										setIsMismatchedRole(true);
 									}
-									// logout();
 								}
-								setIsInvestor(values.is_investor === "true");
 								setIsNewUser(true);
+								setIsInvestor(values.is_investor === "true");
 								setSubmitting(false);
 							}}
 						>
@@ -148,12 +147,12 @@ const Login = (_props: RouteComponentProps): JSX.Element => {
 												>
 													<FormControlLabel
 														value="true"
-														control={<Radio />}
+														control={<Radio required/>}
 														label="Investor"
 													/>
 													<FormControlLabel
 														value="false"
-														control={<Radio />}
+														control={<Radio required/>}
 														label="Issuer"
 													/>
 												</RadioGroup>
@@ -179,7 +178,8 @@ const Login = (_props: RouteComponentProps): JSX.Element => {
 					</Flex>
 				</Flex>
 			</ChakraProvider>
-			<Dialog open={isNewUser} onClose={handleClose}>
+			{isInitialized ? (
+				<Dialog open={isNewUser} onClose={handleClose}>
 				<Stack alignItems="center" m={3}>
 					<DialogTitle>UNREGISTERED ACCOUNT</DialogTitle>
 					<CardMedia component="img" image="warning.gif" sx={{ width: 300 }} />
@@ -192,6 +192,7 @@ const Login = (_props: RouteComponentProps): JSX.Element => {
 						<RegisterModal
 							address={Moralis.User.current()?.attributes.ethAddress}
 							isInvestor={isInvestor}
+							Moralis={Moralis}
 						/>
 						<Button
 							onClick={handleClose}
@@ -202,6 +203,7 @@ const Login = (_props: RouteComponentProps): JSX.Element => {
 					</DialogActions>
 				</Stack>
 			</Dialog>
+			) : null}
 			<Snackbar
 				open={isMismatchedRole}
 				autoHideDuration={6000}
