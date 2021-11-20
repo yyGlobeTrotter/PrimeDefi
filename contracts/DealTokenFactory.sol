@@ -15,18 +15,22 @@ contract DealTokenFactory {
     uint256 public tokenCount;
     address public tokenAddr;
 
-    mapping( address => address[] ) public tokenCreated;
+    mapping(address => address[]) public tokenCreated;
 
     function createToken(
-        address _issuer,
         string memory _name,
         string memory _symbol,
         uint256 _totalSupply
     ) public returns (address) {
-        DealToken dealToken = new DealToken(_issuer, _name, _symbol, _totalSupply);
+        DealToken dealToken = new DealToken(
+            msg.sender,
+            _name,
+            _symbol,
+            _totalSupply
+        );
 
         tokenAddr = address(dealToken);
-        tokenCreated[_issuer].push() = tokenAddr;
+        tokenCreated[msg.sender].push() = tokenAddr;
         tokenCount++;
 
         return tokenAddr;
