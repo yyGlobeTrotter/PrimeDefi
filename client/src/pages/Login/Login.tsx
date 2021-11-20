@@ -1,27 +1,31 @@
 import { RouteComponentProps } from "@reach/router";
-import {
-	Center,
-	Image,
-	Flex,
-	Heading,
-	ChakraProvider,
-} from "@chakra-ui/react";
+import { Center, Image, Flex, Heading, ChakraProvider } from "@chakra-ui/react";
 import { FaFileInvoiceDollar } from "react-icons/fa";
 import { Formik, Field, Form, FormikHelpers } from "formik";
 import { useMoralis } from "react-moralis";
-import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import CardMedia from "@mui/material/CardMedia";
-import FormControl from '@mui/material/FormControl';
-import FormControlLabel from '@mui/material/FormControlLabel';
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogTitle from "@mui/material/DialogTitle";
+import FormControl from "@mui/material/FormControl";
+import FormControlLabel from "@mui/material/FormControlLabel";
 import LoadingButton from "@mui/lab/LoadingButton";
-import Modal from "@mui/material/Modal";
-import Radio from '@mui/material/Radio';
-import RadioGroup from '@mui/material/RadioGroup';
+import MuiAlert, { AlertProps } from "@mui/material/Alert";
+import Radio from "@mui/material/Radio";
+import RadioGroup from "@mui/material/RadioGroup";
+import Snackbar from "@mui/material/Snackbar";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import { useState } from "react";
+import { forwardRef, useState } from "react";
 import RegisterModal from "./RegisterModal";
+
+const Alert = forwardRef<HTMLDivElement, AlertProps>(function Alert(
+	props,
+	ref,
+) {
+	return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
+});
 
 /* eslint react/prop-types: 0 */
 /* eslint react/no-unused-prop-types: 0 */
@@ -35,7 +39,9 @@ const Login = (_props: RouteComponentProps): JSX.Element => {
 	const { authenticate, Moralis } = useMoralis();
 	const [isNewUser, setIsNewUser] = useState(false);
 	const [isInvestor, setIsInvestor] = useState(false);
+	const [isMismatchedRole, setIsMismatchedRole] = useState(false);
 	const handleClose = () => setIsNewUser(false);
+
 	return (
 		<>
 			<ChakraProvider resetCSS={false}>
@@ -82,14 +88,14 @@ const Login = (_props: RouteComponentProps): JSX.Element => {
 							</Heading>
 						</Center>
 						<Center mt="20vh">
-							<Heading
+							{/* <Heading
 								size="lg"
 								mb={5}
 								fontWeight="semibold"
 								textAlign="center"
 							>
 								Login As
-							</Heading>
+							</Heading> */}
 						</Center>
 
 						<Formik
@@ -109,11 +115,17 @@ const Login = (_props: RouteComponentProps): JSX.Element => {
 									) {
 										setIsNewUser(true);
 									}
+								} else if (Moralis.User.current()) {
+									if (
+										Moralis.User.current()?.attributes.is_investor ===
+										values.is_investor
+									) {
+										// redirect user to dashboard
+									} else {
+										setIsMismatchedRole(true);
+									}
+									// logout();
 								}
-								// else {
-								// 	console.log("logging out");
-								// 	logout();
-								// }
 								setIsInvestor(values.is_investor === "true");
 								setIsNewUser(true);
 								setSubmitting(false);
@@ -123,7 +135,10 @@ const Login = (_props: RouteComponentProps): JSX.Element => {
 								<Form>
 									<Field name="is_investor">
 										{({ field, form }: { field: any; form: any }) => (
-											<FormControl component="fieldset"  sx={{display: "block"}}>
+											<FormControl
+												component="fieldset"
+												sx={{ display: "block" }}
+											>
 												<RadioGroup
 													name="controlled-radio-buttons-group"
 													value={field.value}
@@ -164,62 +179,38 @@ const Login = (_props: RouteComponentProps): JSX.Element => {
 					</Flex>
 				</Flex>
 			</ChakraProvider>
-			<Modal open={isNewUser} onClose={handleClose}>
-				<Box
-					sx={{
-						position: "absolute",
-						top: "50%",
-						left: "50%",
-						transform: "translate(-50%, -50%)",
-						width: "30vw",
-						maxWidth: 1000,
-						height: 550,
-						bgcolor: "background.paper",
-						border: "2px solid #000",
-						boxShadow: 24,
-						p: 4,
-					}}
-				>
-					<Stack alignItems="center">
-						<Typography id="modal-modal-title" variant="h6" component="h2">
-							UNREGISTERED ACCOUNT
-						</Typography>
-						<CardMedia
-							component="img"
-							image="warning.gif"
-							sx={{ width: 300 }}
+			<Dialog open={isNewUser} onClose={handleClose}>
+				<Stack alignItems="center" m={3}>
+					<DialogTitle>UNREGISTERED ACCOUNT</DialogTitle>
+					<CardMedia component="img" image="warning.gif" sx={{ width: 300 }} />
+					<Typography id="modal-modal-description" my={1}>
+						Looks like this wallet (
+						{Moralis.User.current()?.attributes.ethAddress}) hasn’t registered
+						yet. Would you like to register this account?
+					</Typography>
+					<DialogActions>
+						<RegisterModal
+							address={Moralis.User.current()?.attributes.ethAddress}
+							isInvestor={isInvestor}
 						/>
-						<Typography id="modal-modal-description" sx={{ mt: 2 }}>
-							Looks like this wallet (
-							{Moralis.User.current()?.attributes.ethAddress}) hasn’t registered
-							yet. Would you like to register this account?
-						</Typography>
-						<Box
-							sx={{
-								display: "flex",
-								alignItems: "center",
-								boxPack: "end",
-								justifyContent: "flex-end",
-								paddingInlineStart: "1.5rem",
-								paddingInlineEnd: "1.5rem",
-								paddingTop: "1rem",
-								paddingBottom: "1rem",
-							}}
+						<Button
+							onClick={handleClose}
+							sx={{ backgroundColor: "red", color: "white" }}
 						>
-							<RegisterModal
-								address={Moralis.User.current()?.attributes.ethAddress}
-								isInvestor={isInvestor}
-							/>
-							<Button
-								onClick={handleClose}
-								sx={{ backgroundColor: "red", color: "white" }}
-							>
-								NO
-							</Button>
-						</Box>
-					</Stack>
-				</Box>
-			</Modal>
+							NO
+						</Button>
+					</DialogActions>
+				</Stack>
+			</Dialog>
+			<Snackbar
+				open={isMismatchedRole}
+				autoHideDuration={6000}
+				onClose={() => setIsMismatchedRole(false)}
+			>
+				<Alert onClose={() => setIsMismatchedRole(false)} severity="error">
+					Wrong Role! Please use different address.
+				</Alert>
+			</Snackbar>
 		</>
 	);
 };
