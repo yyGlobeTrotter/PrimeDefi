@@ -10,11 +10,11 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
 import FormControl from "@mui/material/FormControl";
-import Snackbar from "@mui/material/Snackbar";
 import Grid from "@mui/material/Grid";
 import InputLabel from "@mui/material/InputLabel";
 import MenuItem from "@mui/material/MenuItem";
 import Select from "@mui/material/Select";
+import Snackbar from "@mui/material/Snackbar";
 import TextField from "@mui/material/TextField";
 import Deal from "../../contracts/Deal.json";
 import Alert from "../../components/alert";
@@ -91,33 +91,34 @@ const RegisterModal = ({
 				object.set("representativeAddress", values.representativeAddress);
 				object.set("creditRating", values.creditRating);
 				object.save();
-				fetch({
-					onSuccess: (results) => {
-						setTransactionStatus({
-							transactionCompleted: true,
-							isSuccess: true,
-							message:
-								"Transaction success! Check your wallet for latest transaction status",
-						});
-					},
-					onError: (errors) => {
-						setTransactionStatus({
-							transactionCompleted: true,
-							isSuccess: false,
-							message:
-								"Transaction failed! Check your wallet for latest transaction status",
-						});
-					},
-					params: {
-						abi: Deal.abi,
-						contractAddress: "0x32e74efb67ba4c8d9ef57be37944ebed22c253d1",
-						functionName: "createIssuer",
-						params: {
-							_name: `${values.name} - ${values.representativeName}`,
-							_creditRating: values.creditRating,
-						},
-					},
-				});
+				handleClose();
+				// fetch({
+				// 	onSuccess: (results) => {
+				// 		setTransactionStatus({
+				// 			transactionCompleted: true,
+				// 			isSuccess: true,
+				// 			message:
+				// 				"Transaction success! Check your wallet for latest transaction status",
+				// 		});
+				// 	},
+				// 	onError: (errors) => {
+				// 		setTransactionStatus({
+				// 			transactionCompleted: true,
+				// 			isSuccess: false,
+				// 			message:
+				// 				"Transaction failed! Check your wallet for latest transaction status",
+				// 		});
+				// 	},
+				// 	params: {
+				// 		abi: Deal.abi,
+				// 		contractAddress: "0x32e74efb67ba4c8d9ef57be37944ebed22c253d1",
+				// 		functionName: "createIssuer",
+				// 		params: {
+				// 			_name: `${values.name} - ${values.representativeName}`,
+				// 			_creditRating: values.creditRating,
+				// 		},
+				// 	},
+				// });
 			}
 		},
 	});
@@ -236,7 +237,7 @@ const RegisterModal = ({
 										multiple
 										type="file"
 										onChange={handleDocuments}
-										style={{display: 'none'}}
+										style={{ display: "none" }}
 									/>
 									<Button variant="contained" component="span">
 										Upload KYC Documents

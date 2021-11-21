@@ -1,10 +1,11 @@
 import { useNavigate, RouteComponentProps } from "@reach/router";
-import { Center, Image, Flex, Heading, ChakraProvider } from "@chakra-ui/react";
 import { FaFileInvoiceDollar } from "react-icons/fa";
 import { Formik, Field, Form, FormikHelpers } from "formik";
 import { useMoralis } from "react-moralis";
+import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import CardMedia from "@mui/material/CardMedia";
+import CssBaseline from "@mui/material/CssBaseline";
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogTitle from "@mui/material/DialogTitle";
@@ -20,79 +21,63 @@ import { useState } from "react";
 import RegisterModal from "./RegisterModal";
 import Alert from "../../components/alert";
 
-
 /* eslint react/prop-types: 0 */
 /* eslint react/no-unused-prop-types: 0 */
 /* eslint jsx-a11y/label-has-associated-control: 0 */
 /* eslint react/jsx-props-no-spreading: 0 */
+/* eslint react/style-prop-object: 0 */
 // eslint-disable-next-line
 const Login = (_props: RouteComponentProps): JSX.Element => {
 	interface Values {
 		is_investor: string;
 	}
-	const navigate  = useNavigate();
-	const { authenticate, Moralis, isInitialized } = useMoralis();
+	const navigate = useNavigate();
+	const { authenticate, Moralis, isInitialized, logout } = useMoralis();
 	const [isNewUser, setIsNewUser] = useState(false);
 	const [isInvestor, setIsInvestor] = useState(false);
 	const [isMismatchedRole, setIsMismatchedRole] = useState(false);
 	const handleClose = () => setIsNewUser(false);
-	
+
 	return (
 		<>
-			<ChakraProvider resetCSS={false}>
-				<Flex
-					direction={{
-						lg: "row",
-						base: "column",
+			<CssBaseline />
+			<Box
+				sx={{
+					display: "flex",
+					flexDirection: "row",
+					p: 1,
+					m: 1,
+				}}
+			>
+				<Box
+					sx={{
+						display: "flex",
+						flexGrow: 1,
+						alignItems: "center",
+						justifyContent: "center",
 					}}
 				>
-					<Flex
-						direction="column"
-						alignItems="center"
+					<img
+						src="login.png"
+						alt="illustration"
 						style={{
-							flexGrow: 1,
+							height: "100vh",
 						}}
-					>
-						<Image
-							src={`${window.location.origin}/login.png`}
-							pt={5}
-							pl={5}
-							pb={5}
-							maxHeight="100vh"
-						/>
-					</Flex>
-					<Flex
-						mt={10}
-						direction="column"
-						align="center"
-						minWidth={{
-							lg: 400,
-							xl: 600,
-						}}
-					>
-						<Center>
-							<Heading
-								size="md"
-								color="gray.500"
-								fontFamily="cairo"
-								letterSpacing="0.18em"
-								mt={5}
-								fontWeight="600"
-							>
-								PRIME DEFI
-							</Heading>
-						</Center>
-						<Center mt="20vh">
-							<Heading
-								size="lg"
-								mb={5}
-								fontWeight="semibold"
-								textAlign="center"
-							>
-								Login As
-							</Heading>
-						</Center>
-
+					/>
+				</Box>
+				<Box
+					sx={{
+						display: "flex",
+						flexDirection: "column",
+						alignItems: "center",
+						minWidth: 500,
+					}}
+				>
+					<Stack alignItems="center" m={3}>
+						<Typography variant="h4">PRIME DEFI</Typography>
+						<Typography variant="h5" style={{ marginTop: "20vh" }}>
+							Login As
+						</Typography>
 						<Formik
 							initialValues={{
 								is_investor: "",
@@ -147,12 +132,12 @@ const Login = (_props: RouteComponentProps): JSX.Element => {
 												>
 													<FormControlLabel
 														value="true"
-														control={<Radio required/>}
+														control={<Radio required />}
 														label="Investor"
 													/>
 													<FormControlLabel
 														value="false"
-														control={<Radio required/>}
+														control={<Radio required />}
 														label="Issuer"
 													/>
 												</RadioGroup>
@@ -175,34 +160,38 @@ const Login = (_props: RouteComponentProps): JSX.Element => {
 								</Form>
 							)}
 						</Formik>
-					</Flex>
-				</Flex>
-			</ChakraProvider>
+					</Stack>
+				</Box>
+			</Box>
 			{isInitialized ? (
 				<Dialog open={isNewUser} onClose={handleClose}>
-				<Stack alignItems="center" m={3}>
-					<DialogTitle>UNREGISTERED ACCOUNT</DialogTitle>
-					<CardMedia component="img" image="warning.gif" sx={{ width: 300 }} />
-					<Typography id="modal-modal-description" my={1}>
-						Looks like this wallet (
-						{Moralis.User.current()?.attributes.ethAddress}) hasn’t registered
-						yet. Would you like to register this account?
-					</Typography>
-					<DialogActions>
-						<RegisterModal
-							address={Moralis.User.current()?.attributes.ethAddress}
-							isInvestor={isInvestor}
-							Moralis={Moralis}
+					<Stack alignItems="center" m={3}>
+						<DialogTitle>UNREGISTERED ACCOUNT</DialogTitle>
+						<CardMedia
+							component="img"
+							image="warning.gif"
+							sx={{ width: 300 }}
 						/>
-						<Button
-							onClick={handleClose}
-							sx={{ backgroundColor: "red", color: "white" }}
-						>
-							NO
-						</Button>
-					</DialogActions>
-				</Stack>
-			</Dialog>
+						<Typography id="modal-modal-description" my={1}>
+							Looks like this wallet (
+							{Moralis.User.current()?.attributes.ethAddress}) hasn’t registered
+							yet. Would you like to register this account?
+						</Typography>
+						<DialogActions>
+							<RegisterModal
+								address={Moralis.User.current()?.attributes.ethAddress}
+								isInvestor={isInvestor}
+								Moralis={Moralis}
+							/>
+							<Button
+								onClick={handleClose}
+								sx={{ backgroundColor: "red", color: "white" }}
+							>
+								NO
+							</Button>
+						</DialogActions>
+					</Stack>
+				</Dialog>
 			) : null}
 			<Snackbar
 				open={isMismatchedRole}
