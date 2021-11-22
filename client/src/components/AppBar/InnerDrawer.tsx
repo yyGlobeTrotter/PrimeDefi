@@ -13,11 +13,12 @@ import AppBarList, {
 
 interface InnerDrawerProps {
 	pathname: string;
+	isInvestor: boolean;
 }
 
 const InnerDrawer: FC<InnerDrawerProps> = (props) => {
-	const { pathname } = props;
-	const ROLE = "ISSUER";
+	const { pathname, isInvestor } = props;
+	const ROLE = isInvestor ? "INVESTOR" : "ISSUER";
 	const AppBarListByRole = useMemo(
 		() =>
 			AppBarList.find(
@@ -25,7 +26,7 @@ const InnerDrawer: FC<InnerDrawerProps> = (props) => {
 			) ?? { menu: [] },
 		[ROLE],
 	);
-
+	
 	return (
 		<>
 			<Toolbar />

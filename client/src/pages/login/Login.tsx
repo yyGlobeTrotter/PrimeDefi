@@ -29,15 +29,15 @@ import Alert from "../../components/alert";
 // eslint-disable-next-line
 const Login = (_props: RouteComponentProps): JSX.Element => {
 	interface Values {
-		is_investor: string;
+		isInvestor: boolean;
 	}
 	const navigate = useNavigate();
-	const { authenticate, Moralis, isInitialized, logout } = useMoralis();
+	const { authenticate, Moralis, isInitialized, logout, isAuthenticated } =
+		useMoralis();
 	const [isNewUser, setIsNewUser] = useState(false);
 	const [isInvestor, setIsInvestor] = useState(false);
 	const [isMismatchedRole, setIsMismatchedRole] = useState(false);
 	const handleClose = () => setIsNewUser(false);
-
 	return (
 		<>
 			<CssBaseline />
@@ -80,7 +80,7 @@ const Login = (_props: RouteComponentProps): JSX.Element => {
 						</Typography>
 						<Formik
 							initialValues={{
-								is_investor: "",
+								isInvestor: false,
 							}}
 							onSubmit={async (
 								values: Values,
@@ -88,36 +88,31 @@ const Login = (_props: RouteComponentProps): JSX.Element => {
 							) => {
 								if (!Moralis.User.current()) {
 									await authenticate();
-									if (
-										Moralis.User.current()?.attributes.is_investor ===
-											undefined ||
-										Moralis.User.current()?.attributes.is_investor === null
-									) {
-										setIsNewUser(true);
-									}
-								} else if (Moralis.User.current()) {
-									if (
-										Moralis.User.current()?.attributes.is_investor.toString() ===
-										values.is_investor
-									) {
-										if(values.is_investor) {
-											navigate("/dashboard");
-										}
-										else {
-											navigate("/issuer");
-										}
-									} else {
-										setIsMismatchedRole(true);
-									}
 								}
-								setIsNewUser(true);
-								setIsInvestor(values.is_investor === "true");
+								if (
+									Moralis.User.current()?.attributes.isInvestor === undefined ||
+									Moralis.User.current()?.attributes.isInvestor === null
+								) {
+									setIsNewUser(true);
+								} else if (
+									Moralis.User.current()?.attributes.isInvestor.toString() ===
+									values.isInvestor
+								) {
+									if (Moralis.User.current()?.attributes.isInvestor) {
+										navigate("/dashboard");
+									} else {
+										navigate("/issuer");
+									}
+								} else {
+									setIsMismatchedRole(true);
+								}
+								setIsInvestor(values.isInvestor === true);
 								setSubmitting(false);
 							}}
 						>
 							{(props) => (
 								<Form>
-									<Field name="is_investor">
+									<Field name="isInvestor">
 										{({ field, form }: { field: any; form: any }) => (
 											<FormControl
 												component="fieldset"
@@ -127,7 +122,7 @@ const Login = (_props: RouteComponentProps): JSX.Element => {
 													name="controlled-radio-buttons-group"
 													value={field.value}
 													onChange={(e) => {
-														form.setFieldValue("is_investor", e.target.value);
+														form.setFieldValue("isInvestor", e.target.value);
 													}}
 												>
 													<FormControlLabel

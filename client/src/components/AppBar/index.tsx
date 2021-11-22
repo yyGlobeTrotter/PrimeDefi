@@ -19,7 +19,7 @@ interface AppBarIndexProps {
 
 const AppBarIndex: FC<AppBarIndexProps> = (props) => {
 	const { pathname } = props;
-	const { logout } = useMoralis();
+	const { logout, user } = useMoralis();
 	const [mobileOpen, setMobileOpen] = useState<boolean>(false);
 
 	/**
@@ -93,7 +93,7 @@ const AppBarIndex: FC<AppBarIndexProps> = (props) => {
 						},
 					}}
 				>
-					<InnerDrawer pathname={pathname} />
+					<InnerDrawer pathname={pathname} isInvestor={user?.attributes.isInvestor}/>
 				</Drawer>
 				<Drawer
 					variant="permanent"
@@ -106,7 +106,7 @@ const AppBarIndex: FC<AppBarIndexProps> = (props) => {
 					}}
 					open
 				>
-					<InnerDrawer pathname={pathname} />
+					<InnerDrawer pathname={pathname} isInvestor={user?.attributes.isInvestor}/>
 				</Drawer>
 			</Box>
 		</>

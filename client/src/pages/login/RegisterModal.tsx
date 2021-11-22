@@ -21,7 +21,6 @@ import Alert from "../../components/alert";
 
 /* eslint react/jsx-curly-brace-presence: 0 */
 /* eslint react/jsx-props-no-spreading: 0 */
-// /* eslint jsx-a11y\label-has-associated-control: 0 */
 // eslint-disable-next-line
 interface RegisterInfo {
 	address: string;
@@ -47,14 +46,6 @@ const RegisterModal = ({
 	const handleDocuments = (e: any) => setDocuments(e.target.files);
 	const { data, error, fetch, isFetching, isLoading } =
 		useWeb3ExecuteFunction();
-	// console.log(data);
-	// if(!isFetching) {
-	// 	console.log(error);
-	// 	console.log(data);
-	// }
-	// else {
-	// 	console.log(false);
-	// }
 
 	const closeSnackbar = () => {
 		if (transactionStatus.isSuccess) {
@@ -64,11 +55,6 @@ const RegisterModal = ({
 				navigate("/issuer");
 			}
 		}
-		setTransactionStatus({
-			transactionCompleted: false,
-			isSuccess: false,
-			message: "",
-		});
 	};
 	const formik = useFormik({
 		initialValues: {
@@ -85,40 +71,42 @@ const RegisterModal = ({
 			query.equalTo("ethAddress", values.address);
 			const object = await query.first();
 			if (object) {
+				object.set("isInvestor", isInvestor);
 				object.set("holdingName", values.name);
 				object.set("representativeName", values.representativeName);
 				object.set("representativeContact", values.representativeContact);
 				object.set("representativeAddress", values.representativeAddress);
 				object.set("creditRating", values.creditRating);
 				object.save();
-				handleClose();
-				// fetch({
-				// 	onSuccess: (results) => {
-				// 		setTransactionStatus({
-				// 			transactionCompleted: true,
-				// 			isSuccess: true,
-				// 			message:
-				// 				"Transaction success! Check your wallet for latest transaction status",
-				// 		});
-				// 	},
-				// 	onError: (errors) => {
-				// 		setTransactionStatus({
-				// 			transactionCompleted: true,
-				// 			isSuccess: false,
-				// 			message:
-				// 				"Transaction failed! Check your wallet for latest transaction status",
-				// 		});
-				// 	},
-				// 	params: {
-				// 		abi: Deal.abi,
-				// 		contractAddress: "0x32e74efb67ba4c8d9ef57be37944ebed22c253d1",
-				// 		functionName: "createIssuer",
-				// 		params: {
-				// 			_name: `${values.name} - ${values.representativeName}`,
-				// 			_creditRating: values.creditRating,
-				// 		},
-				// 	},
-				// });
+				fetch({
+					onSuccess: (results) => {
+						setTransactionStatus({
+							transactionCompleted: true,
+							isSuccess: true,
+							message:
+								"Transaction success! Check your wallet for latest transaction status",
+						});
+						handleClose();
+					},
+					onError: (errors) => {
+						setTransactionStatus({
+							transactionCompleted: true,
+							isSuccess: false,
+							message:
+								"Transaction failed! Check your wallet for latest transaction status",
+						});
+						handleClose();
+					},
+					params: {
+						abi: Deal.abi,
+						contractAddress: "0x3271fb4BC23661Bd8cec78D9554284C0Fa16Bb86",
+						functionName: "createIssuer",
+						params: {
+							_name: `${values.name} - ${values.representativeName}`,
+							_creditRating: values.creditRating,
+						},
+					},
+				});
 			}
 		},
 	});
