@@ -44,8 +44,7 @@ const RegisterModal = ({
 	const handleClose = () => setOpen(false);
 	const [documents, setDocuments] = useState(false);
 	const handleDocuments = (e: any) => setDocuments(e.target.files);
-	const { data, error, fetch, isFetching, isLoading } =
-		useWeb3ExecuteFunction();
+	const { fetch } = useWeb3ExecuteFunction();
 
 	const closeSnackbar = () => {
 		if (transactionStatus.isSuccess) {

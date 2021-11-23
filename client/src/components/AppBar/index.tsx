@@ -9,6 +9,7 @@ import MenuIcon from "@mui/icons-material/Menu";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import { useMoralis } from "react-moralis";
+import { navigate } from "@reach/router";
 import InnerDrawer from "./InnerDrawer";
 
 const drawerWidth = 240;
@@ -35,6 +36,7 @@ const AppBarIndex: FC<AppBarIndexProps> = (props) => {
 	const onLogout = async () => {
 		try {
 			await logout();
+			navigate('/login');
 		} catch (e) {
 			// Should be replaced by error snackbar
 			// eslint-disable-next-line

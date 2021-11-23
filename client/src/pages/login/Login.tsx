@@ -96,7 +96,7 @@ const Login = (_props: RouteComponentProps): JSX.Element => {
 									setIsNewUser(true);
 								} else if (
 									Moralis.User.current()?.attributes.isInvestor.toString() ===
-									values.isInvestor
+									values.isInvestor.toString()
 								) {
 									if (Moralis.User.current()?.attributes.isInvestor) {
 										navigate("/dashboard");
@@ -105,6 +105,7 @@ const Login = (_props: RouteComponentProps): JSX.Element => {
 									}
 								} else {
 									setIsMismatchedRole(true);
+									logout();
 								}
 								setIsInvestor(values.isInvestor === true);
 								setSubmitting(false);
