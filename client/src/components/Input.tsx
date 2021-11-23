@@ -10,6 +10,8 @@ interface CustomInputProps {
 	subtitle?: string | number;
 	placeholder?: string;
 	type?: string;
+	value: string;
+	onChange: (e: any) => void;
 }
 
 const CustomInput: FC<CustomInputProps> = (props) => {
@@ -20,6 +22,8 @@ const CustomInput: FC<CustomInputProps> = (props) => {
 		subtitle = "",
 		placeholder = "",
 		type = "",
+		value = "",
+		onChange,
 	} = props;
 
 	return (
@@ -37,6 +41,8 @@ const CustomInput: FC<CustomInputProps> = (props) => {
 					placeholder={placeholder}
 					size="small"
 					type={type}
+					value={value}
+					onChange={onChange}
 				/>
 			</Grid>
 			<Grid item>

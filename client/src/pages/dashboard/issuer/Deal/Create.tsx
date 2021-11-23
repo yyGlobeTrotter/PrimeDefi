@@ -1,7 +1,7 @@
 import { FC } from "react";
 import { RouteComponentProps } from "@reach/router";
 import { useWeb3ExecuteFunction } from "react-moralis";
-import { useFormik } from "formik";
+import { FormikProps, useFormik } from "formik";
 import Grid from "@mui/material/Grid";
 import Button from "@mui/material/Button";
 import Input from "../../../../components/Input";
@@ -11,34 +11,38 @@ import createDealTextFields, {
 } from "../../../../list/createDeal";
 import Deal from "../../../../contracts/Deal.json";
 
+interface CreateDealInputProps {
+	[key: string]: string;
+}
+
 const CreateDeal: FC<RouteComponentProps> = () => {
 	const { abi } = Deal;
-
-	const formik = useFormik({
-		initialValues: {
-			ISINNumber: "",
-			dealName: "",
-			initialOfferSize: "",
-			minLaunchSize: "",
-			faceValue: "",
-			amountRequiredForEscrow: "",
-			offerDateRange: "",
-			term: "",
-			interestRate: "",
-			bondIssueDate: "",
-			upfrontFee: "",
-		},
-		onSubmit: (values) => {
-			console.log(values);
-		},
-	});
-
 	const { fetch, data, isLoading, isFetching } = useWeb3ExecuteFunction({
 		abi,
-		functionName: "createDeal",
-		contractAddress: "0x32e74eFB67BA4C8D9eF57bE37944ebED22c253D1",
+		functionName: "createDealIssuance",
+		contractAddress: "0x3271fb4BC23661Bd8cec78D9554284C0Fa16Bb86",
 		params: {},
 	});
+
+	const formik: FormikProps<CreateDealInputProps> =
+		useFormik<CreateDealInputProps>({
+			initialValues: {
+				_ISIN: "",
+				_dealName: "",
+				_initSize: "",
+				_minSize: "",
+				_faceValue: "",
+				_offerPrice: "",
+				_offerCloseTime: "",
+				_term: "",
+				__interestRate: "",
+				_interestRate: "",
+				_upfrontFee: "",
+			},
+			onSubmit: (values) => {
+				fetch({ params: values });
+			},
+		});
 
 	return (
 		<BasicLayout title="Create Deal" spacing={3}>
@@ -57,6 +61,7 @@ const CreateDeal: FC<RouteComponentProps> = () => {
 							lg,
 							xl,
 						} = field;
+						const { values, handleChange } = formik;
 						return (
 							<Grid item xs={xs} sm={sm} md={md} lg={lg} xl={xl}>
 								<Input
@@ -65,6 +70,8 @@ const CreateDeal: FC<RouteComponentProps> = () => {
 									disabled={disabled}
 									subtitle={subtitle}
 									placeholder={placeholder}
+									value={values[name] as string}
+									onChange={handleChange}
 								/>
 							</Grid>
 						);
