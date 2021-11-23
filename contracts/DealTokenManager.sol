@@ -1,18 +1,19 @@
-//SPDX-License-Identifier: GPL-3.0
+// SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.0;
-
-//import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/ERC20.sol";
+pragma solidity 0.8.0;
 
 import "./DealToken.sol";
 
 contract DealTokenManager {
-    //mapping( address => DealToken ) public tokens;
     mapping( address => address ) public tokenOwners;
     mapping( string => bool ) public isTokenNameTaken;
 
     function setTokenOwner(address _token, address _owner) public {
         tokenOwners[_token] = _owner;
+    }
+
+    function getTokenOwner(address _token) public view returns(address) {
+        return tokenOwners[_token];
     }
 
     function transfer(address _token, address _to, uint256 _amount) public {

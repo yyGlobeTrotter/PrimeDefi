@@ -1,10 +1,11 @@
-//SPDX-License-Identifier: GPL-3.0;
+// SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.0;
+pragma solidity 0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
-//import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/math/SafeMath.sol";
+//import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/utils/SafeERC20.sol";
+// import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/ERC20.sol";
 
 /**
  * @title DealToken
@@ -12,8 +13,6 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
  * @dev Represents one particular token created for one issuance
  */
 contract DealToken is ERC20 {
-    //using SafeMath for uint256;
-
     /* PAUSABLE EVENTS
     event Pause();
     event Unpause();
