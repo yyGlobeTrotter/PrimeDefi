@@ -93,7 +93,10 @@ const AppBarIndex: FC<AppBarIndexProps> = (props) => {
 						},
 					}}
 				>
-					<InnerDrawer pathname={pathname} isInvestor={user?.attributes.isInvestor}/>
+					<InnerDrawer
+						pathname={pathname}
+						isInvestor={user?.attributes.isInvestor}
+					/>
 				</Drawer>
 				<Drawer
 					variant="permanent"
@@ -106,7 +109,10 @@ const AppBarIndex: FC<AppBarIndexProps> = (props) => {
 					}}
 					open
 				>
-					<InnerDrawer pathname={pathname} isInvestor={user?.attributes.isInvestor}/>
+					<InnerDrawer
+						pathname={pathname}
+						isInvestor={user?.attributes.isInvestor}
+					/>
 				</Drawer>
 			</Box>
 		</>

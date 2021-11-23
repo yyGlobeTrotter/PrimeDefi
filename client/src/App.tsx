@@ -1,10 +1,10 @@
-import { useEffect } from "react";
+import { FC, useEffect } from "react";
 import { Router } from "@reach/router";
 import { useMoralis } from "react-moralis";
 import Login from "./pages/login/Login";
 import Dashboard from "./pages/dashboard";
 
-const App = (): JSX.Element => {
+const App: FC = () => {
 	const { isAuthenticated, isWeb3Enabled, isWeb3EnableLoading, enableWeb3 } =
 		useMoralis();
 
