@@ -42,7 +42,7 @@ const RegisterModal = ({
 	});
 	const handleOpen = () => setOpen(true);
 	const handleClose = () => setOpen(false);
-	const [documents, setDocuments] = useState(false);
+	const [, setDocuments] = useState(false);
 	const handleDocuments = (e: any) => setDocuments(e.target.files);
 	const { fetch } = useWeb3ExecuteFunction();
 
@@ -78,7 +78,7 @@ const RegisterModal = ({
 				object.set("creditRating", values.creditRating);
 				object.save();
 				fetch({
-					onSuccess: (results) => {
+					onSuccess: () => {
 						setTransactionStatus({
 							transactionCompleted: true,
 							isSuccess: true,
@@ -87,7 +87,7 @@ const RegisterModal = ({
 						});
 						handleClose();
 					},
-					onError: (errors) => {
+					onError: () => {
 						setTransactionStatus({
 							transactionCompleted: true,
 							isSuccess: false,

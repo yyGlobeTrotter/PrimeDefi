@@ -36,7 +36,7 @@ const AppBarIndex: FC<AppBarIndexProps> = (props) => {
 	const onLogout = async () => {
 		try {
 			await logout();
-			navigate('/login');
+			navigate("/login");
 		} catch (e) {
 			// Should be replaced by error snackbar
 			// eslint-disable-next-line
