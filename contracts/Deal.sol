@@ -110,6 +110,7 @@ contract Deal {
     }
 
     struct DealIssuance {
+uint256 id;     // difficult to handle string in solidity, better to add a numeric identifier!!!
         string ISIN;    // the 12-digit unique identifier of an issuance
 
         string dealName;
@@ -163,7 +164,10 @@ contract Deal {
     struct Investor {
         address addr;
         mapping(address => bool) isExisting;
-        string[] dealsBidded;  // a ventor of the deal issuance ISINs the investor has participated in bidding
+
+uint256 dealsBidCount;
+uint256[] dealsBidId;  // a list of ids of deals bidded
+string[] dealsBidISIN;  // a list of ISINs of deals bidded
 
         uint256 totalBalance;       // in terms of stablecoin
         uint256 totalLockedInBid;   // in terms of stablecoin
@@ -183,6 +187,8 @@ contract Deal {
 
     uint256 public dealCount;       // total number of deals created in the dapp
     mapping( string => DealIssuance ) deals;    // map out ISIN to DealIssuance struct object
+mapping( string => uint256 ) ISINtoId;    // map out deal ISIN to deal id
+mapping( uint256 => string ) idToISIN;    // map out deal id to deal ISIN
 
     uint256 public issuerCount;     // total number of issuers in the dapp
     mapping( address => Issuer ) issuers;     // map out issuer address to Issuer struct object
@@ -337,14 +343,14 @@ contract Deal {
     * @dev Get investor details - investors can view their own details via this function call
     */
     function getAllInvestorDetails(address _addr) public view returns(
-        string[] memory dealsBidded,
+        string[] memory dealsBidISIN,
         uint256 totalBalance,
         uint256 totalLockedInBid,
         uint256 availBalance)
     {
         require(msg.sender == _addr, "DEAL:: getAllInvestorDetails: Caller is NOT the investor");
-
-        return( investors[_addr].dealsBidded, investors[_addr].totalBalance, investors[_addr].totalLockedInBid, investors[_addr].availBalance );
+        Investor storage investor = investors[_addr];
+        return( investor.dealsBidISIN, investor.totalBalance, investor.totalLockedInBid, investor.availBalance );
     }
 
     /**
@@ -524,6 +530,9 @@ contract Deal {
 
         deal.state = State.OFFERLIVE;
         deal.isOfferLive = true;
+deal.id = dealCount;
+ISINtoId[_ISIN] = dealCount;
+idToISIN[dealCount] = _ISIN;
         dealCount++;
 
         emit LogCreateDealIssuance(msg.sender, _ISIN, _dealName, _initSize, _minSize, _faceValue, _offerPrice, deal.offerStartTime, _offerCloseTime, _term, _interestRate, _interestPaymentDates, _upfrontFee);
@@ -706,12 +715,12 @@ contract Deal {
 
         deal.totalInvestorBid = safeAdd(deal.totalInvestorBid, _bidAmount);
 
-        investor.dealsBidded.push() = _ISIN;
+investor.dealsBidId[investor.dealsBidCount] = ISINtoId[_ISIN];
+investor.dealsBidISIN[investor.dealsBidCount] = _ISIN;
+investor.dealsBidCount++;
+
         investor.totalLockedInBid = safeAdd(investor.totalLockedInBid, _bidAmount);
         investor.availBalance = safeSub(investor.totalBalance, investor.totalLockedInBid);
-
-        //investor.isOfferClosed[_ISIN] = false;
-        //investor.isBidSuccessful[_ISIN] = false;
         investor.lockedInBid[_ISIN] = _bidAmount;
 
         deal.investors.push() = msg.sender;
@@ -741,29 +750,64 @@ contract Deal {
     * @notice Investor edits an already-placed bid
     * @dev this is only allowed before deal offer period is closed
     */
-    function investorEditBid(string memory _ISIN, address _addr, uint256 _newBidAmount) public {
+    function investorEditBid(string memory _ISIN, uint256 _newBidAmount) public {
         DealIssuance storage deal = deals[_ISIN];
         Investor storage investor = investors[msg.sender];
 
         //require(msg.sender == deal.investors[], "DEAL:: investorEditBid: Not an investor for this deal");    // need to verify if msg.sender is an investor for this deal
-        require(deals[_ISIN].isOfferLive, "DEAL:: investorEditBid: You cannot change a bid if the offer is NOT live");
+        require(deal.isOfferLive, "DEAL:: investorEditBid: You cannot change a bid if the offer is NOT live");
         require(deal.investorAlreadyBid[msg.sender], "DEAL:: investorEditBid: you haven't made a bid yet");
         require(_newBidAmount <= investor.totalBalance, "DEAL:: investorEditBid: insuffient fund");
 
-        deal.totalInvestorBid = safeAdd( safeSub( deal.totalInvestorBid, investor.lockedInBid[_ISIN] ), _newBidAmount );
+        uint256 oldBid = investor.lockedInBid[_ISIN];
 
-        investor.totalLockedInBid = safeAdd( safeSub( investor.totalLockedInBid, investor.lockedInBid[_ISIN] ), _newBidAmount );
-        investor.availBalance = safeSub(investor.totalBalance, investor.totalLockedInBid);
+        deal.totalInvestorBid = safeAdd( safeSub( deal.totalInvestorBid, oldBid ), _newBidAmount );
+
+        investor.totalLockedInBid = safeAdd( safeSub( investor.totalLockedInBid, oldBid ), _newBidAmount );
+        investor.availBalance = safeSub( investor.totalBalance, investor.totalLockedInBid );
 
         investor.lockedInBid[_ISIN] = _newBidAmount;
         //*** emit LogInvestorEditBid(); ***
     }
 
+    /**
+    * @notice Investor cancels a bid s/he made earlier
+    * @dev this is only allowed when the deal's offer period is live & when there's an existing bid made by the investor
+    */
+    function investorCancelBid(string memory _ISIN) public {
+        DealIssuance storage deal = deals[_ISIN];
+        Investor storage investor = investors[msg.sender];
 
+        require(deals[_ISIN].isOfferLive, "DEAL:: investorCancelBid: Cannot cancel - the offer is NOT live");
+        require(deal.investorAlreadyBid[msg.sender], "DEAL:: investorCancelBid: Cannot cancel - you haven't made a bid yet");
 
-    function investorCancelBid(string memory _ISIN, address _addr) public {
-        //......
+        uint256 bid = investor.lockedInBid[_ISIN];
+        deal.totalInvestorBid = safeSub(deal.totalInvestorBid, bid);
+
+    for (uint i = 0; i < investor.dealsBidCount; i++) {
+        if (investor.dealsBidId[i] == ISINtoId[_ISIN]) {
+            delete investor.dealsBidId[i];
+            delete investor.dealsBidISIN[i];
+        }
     }
+    investor.dealsBidCount--;
+
+        investor.totalLockedInBid = safeSub(investor.totalLockedInBid, bid);
+        investor.availBalance = safeAdd(investor.availBalance, bid);
+        investor.lockedInBid[_ISIN] = 0;
+
+    for (uint j = 0; j < deal.investorCount; j++) {
+        if (deal.investors[j] == msg.sender) {
+            delete deal.investors[j];
+        }
+    }
+    deal.investorCount--;
+    deal.investorAlreadyBid[msg.sender] = false;
+
+        //*** emit LogInvestorCancelBid(); ***
+    }
+
+
 
     function investorWithdraw(address _addr, uint256 _amount) public {
         //......
