@@ -1,4 +1,4 @@
-import { FC } from "react";
+import { FC, useMemo } from "react";
 import { RouteComponentProps } from "@reach/router";
 import { useWeb3ExecuteFunction } from "react-moralis";
 import { FormikProps, useFormik } from "formik";
@@ -17,12 +17,11 @@ interface CreateDealInputProps {
 
 const CreateDeal: FC<RouteComponentProps> = () => {
 	const { abi } = Deal;
-	const { fetch } = useWeb3ExecuteFunction({
-		abi,
-		functionName: "createDealIssuance",
-		contractAddress: "0x3271fb4BC23661Bd8cec78D9554284C0Fa16Bb86",
-		params: {},
-	});
+	const { fetch, isFetching, isLoading } = useWeb3ExecuteFunction();
+	const disableButton = useMemo(
+		() => isFetching || isLoading,
+		[isFetching, isLoading],
+	);
 
 	const formik: FormikProps<CreateDealInputProps> =
 		useFormik<CreateDealInputProps>({
@@ -35,12 +34,21 @@ const CreateDeal: FC<RouteComponentProps> = () => {
 				_offerPrice: "",
 				_offerCloseTime: "",
 				_term: "",
-				__interestRate: "",
 				_interestRate: "",
 				_upfrontFee: "",
 			},
 			onSubmit: (values) => {
-				fetch({ params: values });
+				fetch({
+					params: {
+						abi,
+						functionName: "createDealIssuance",
+						contractAddress: "0x3271fb4BC23661Bd8cec78D9554284C0Fa16Bb86",
+						params: {
+							...values,
+							_interestPaymentDates: ["1637738471"],
+						},
+					},
+				});
 			},
 		});
 
@@ -77,7 +85,9 @@ const CreateDeal: FC<RouteComponentProps> = () => {
 						);
 					})}
 					<Grid item xs={12}>
-						<Button type="submit">Create Deal</Button>
+						<Button type="submit" disabled={disableButton}>
+							Create Deal
+						</Button>
 					</Grid>
 				</Grid>
 			</form>
