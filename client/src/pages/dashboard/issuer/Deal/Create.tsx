@@ -17,7 +17,7 @@ interface CreateDealInputProps {
 
 const CreateDeal: FC<RouteComponentProps> = () => {
 	const { abi } = Deal;
-	const { fetch, data, isLoading, isFetching } = useWeb3ExecuteFunction({
+	const { fetch } = useWeb3ExecuteFunction({
 		abi,
 		functionName: "createDealIssuance",
 		contractAddress: "0x3271fb4BC23661Bd8cec78D9554284C0Fa16Bb86",
