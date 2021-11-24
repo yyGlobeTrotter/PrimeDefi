@@ -1,5 +1,5 @@
 import { useNavigate, RouteComponentProps } from "@reach/router";
-import { FaFileInvoiceDollar } from "react-icons/fa";
+// import { FaFileInvoiceDollar } from "react-icons/fa";
 import { Formik, Field, Form, FormikHelpers } from "formik";
 import { useMoralis } from "react-moralis";
 import Box from "@mui/material/Box";
@@ -17,9 +17,13 @@ import RadioGroup from "@mui/material/RadioGroup";
 import Snackbar from "@mui/material/Snackbar";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import { useState } from "react";
+import { FC, useState } from "react";
 import RegisterModal from "./RegisterModal";
 import Alert from "../../components/alert";
+
+interface Values {
+	isInvestor: boolean;
+}
 
 /* eslint react/prop-types: 0 */
 /* eslint react/no-unused-prop-types: 0 */
@@ -27,13 +31,9 @@ import Alert from "../../components/alert";
 /* eslint react/jsx-props-no-spreading: 0 */
 /* eslint react/style-prop-object: 0 */
 // eslint-disable-next-line
-const Login = (_props: RouteComponentProps): JSX.Element => {
-	interface Values {
-		isInvestor: boolean;
-	}
+const Login: FC<RouteComponentProps> = () => {
 	const navigate = useNavigate();
-	const { authenticate, Moralis, isInitialized, logout, isAuthenticated } =
-		useMoralis();
+	const { authenticate, Moralis, isInitialized, logout } = useMoralis();
 	const [isNewUser, setIsNewUser] = useState(false);
 	const [isInvestor, setIsInvestor] = useState(false);
 	const [isMismatchedRole, setIsMismatchedRole] = useState(false);
