@@ -4,7 +4,7 @@ pragma solidity 0.8.0;
 
 //import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/security/Pausable.sol";
 //import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/security/ReentrancyGuard.sol";
-//import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/access/Ownable.sol";
+// import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/access/Ownable.sol";
 
 import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/math/SafeMath.sol";
 import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/math/Math.sol";
@@ -18,6 +18,7 @@ import "./DealTokenManager.sol";
 import "./IssuerSet.sol";
 import "./InvestorSet.sol";
 import "./DealSet.sol";
+import "./PrimeFiChainLinkClient.sol";
 
 /**
  * @title Deal
@@ -37,8 +38,13 @@ import "./DealSet.sol";
  * @dev To implement decimals to our DealToken
  * @dev To implement global fee
  */
-//contract Deal is Ownable {
-contract Deal {
+
+interface IDeal {
+    function setIssuerRating(address _addr, string memory _newCreditRating) external;
+}
+
+// contract Deal is Ownable {
+contract Deal  {
     /// Libraries
     //using SafeERC20 for IERC20;
     using SafeMath for uint256;
@@ -48,7 +54,7 @@ contract Deal {
     //using DealSet for DealIssuance;
     //using InvestorSet for Investor;
 
-    event LogCreateIssuer(address indexed _issuer, string _name, string _creditRating);
+    event LogCreateIssuer(address indexed _issuer, string _name);
     event LogEditIssuerMetaData(address indexed _issuer, string _name, string _creditRating);
 
     event LogCreateDealIssuance(
@@ -90,6 +96,8 @@ contract Deal {
     event LogIssueNewDeal(address indexed _issuer,  string indexed _ISIN, address _token, uint256 _finalSize, address[] _investors );
 
     event LogTransferDealToken(string indexed _ISIN, address _token, address _investorAddr, uint256 _tokenAmount);
+
+    IPrimeFiChainLinkClient chainLinkClient;
 
     /*
     enum State {
@@ -255,29 +263,38 @@ mapping( uint256 => string ) idToISIN;    // map out deal id to deal ISIN
     }
     */
 
+    function setChainLinkClient(address _chainLinkClientAddress) external {
+        chainLinkClient = IPrimeFiChainLinkClient(_chainLinkClientAddress);
+    }
+
     /**
     * @notice Create issuer & set meta data details
     */
-    function createIssuer(string memory _name, string memory _creditRating) public {
+    function createIssuer(string memory _name) public {
         Issuer storage issuer = issuers[msg.sender];
         //require(issuer.insert(msg.sender));   // Using my Library IssuerSet here
 
         issuer.name = _name;
-        issuer.creditRating = _creditRating;
 
         issuerCount++;
-        emit LogCreateIssuer(msg.sender, _name, _creditRating);
+        emit LogCreateIssuer(msg.sender, _name);
+        chainLinkClient.requestRating(msg.sender, _name);
     }
 
     /**
     * @notice Edit issuer meta data
     */
-    function editIssuerMetaData(address _addr, string memory _newName, string memory _newCreditRating) public {
+    function editIssuerMetaData(address _addr, string memory _newName) public {
         require(msg.sender == _addr, "DEAL:: editIssuerDetails: Caller is NOT the issuer");
         issuers[_addr].name = _newName;
+
+        emit LogEditIssuerMetaData(_addr, _newName, issuers[_addr].creditRating);
+    }
+
+    function setIssuerRating(address _addr, string memory _newCreditRating) public {
         issuers[_addr].creditRating = _newCreditRating;
 
-        emit LogEditIssuerMetaData(_addr, _newName, _newCreditRating);
+        emit LogEditIssuerMetaData(_addr, issuers[_addr].name, _newCreditRating);
     }
 
     /**
