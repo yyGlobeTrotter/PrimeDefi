@@ -11,7 +11,7 @@ import Toolbar from "@mui/material/Toolbar";
 import { useMoralis } from "react-moralis";
 import Dashboard from "./Dashboard";
 import Wallet from "./Wallet";
-import Deal from "./issuer/Deal/Index";
+import Deal from "./issuer/Deal";
 import Bidding from "./investor/Bidding";
 import Holdings from "./investor/Holdings";
 import AppBar from "../../components/AppBar";
