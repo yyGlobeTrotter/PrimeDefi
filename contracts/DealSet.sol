@@ -23,6 +23,7 @@ struct Token {
 
 /// This represents an unique issuance
 struct DealIssuance {
+    uint256 id;     // difficult to handle string in solidity, better to add a numeric identifier!!!
     string ISIN;    // the 12-digit unique identifier of an issuance
 
     string dealName;

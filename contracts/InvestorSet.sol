@@ -6,7 +6,10 @@ pragma solidity 0.8.0;
 struct Investor {
     address addr;
     mapping(address => bool) isExisting;
-    string[] dealsBidded;  // a ventor of the deal issuance ISINs the investor has participated in bidding
+
+uint256 dealsBidCount;
+uint256[] dealsBidId;  // a list of ids of deals bidded
+string[] dealsBidISIN;  // a list of ISINs of deals bidded
 
     uint256 totalBalance;       // in terms of stablecoin
     uint256 totalLockedInBid;   // in terms of stablecoin
