@@ -20,8 +20,11 @@ contract PrimeFiChainLinkClient is ChainlinkClient, ConfirmedOwner, IPrimeFiChai
   address public oracle = 0x0cfd0c62496a623eD06563422EA03B7b768e5D73;
   string public chainlinkNodeJobId = "db4bf74b01d6462f9151607832ba84f5";
 
-  mapping (bytes32 => address) requestIdToIssuer;
-  mapping (bytes32 => address) requestIdToSender;
+  mapping (bytes32 => address) public requestIdToIssuer;
+  mapping (bytes32 => address) public requestIdToSender;
+
+  event RatingRequested(bytes32 requestId, string issuerName, address sender);
+  event RatingReceived(bytes32 requestId, bytes32 rating);
 
   constructor() ConfirmedOwner(msg.sender){
     setPublicChainlinkToken();
@@ -39,16 +42,17 @@ contract PrimeFiChainLinkClient is ChainlinkClient, ConfirmedOwner, IPrimeFiChai
     {
         Chainlink.Request memory req = buildChainlinkRequest(stringToBytes32(chainlinkNodeJobId), address(this), this.fulfillRating.selector);
         req.add("name", _issuerName);
-        sendChainlinkRequestTo(oracle, req, ORACLE_PAYMENT);
-        requestIdToIssuer[req.id] = _issuerAddress;
-        requestIdToSender[req.id] = msg.sender;
+        bytes32 requestId = sendChainlinkRequestTo(oracle, req, ORACLE_PAYMENT);
+        requestIdToIssuer[requestId] = _issuerAddress;
+        requestIdToSender[requestId] = msg.sender;
+        emit RatingRequested(requestId, _issuerName, msg.sender);
     }
-
 
   function fulfillRating(bytes32 _requestId, bytes32 _rating)
     public
     recordChainlinkFulfillment(_requestId)
   {
+    emit RatingReceived(_requestId, _rating);
     address issuer = requestIdToIssuer[_requestId];
     address sender = requestIdToSender[_requestId];
     IDeal deal = IDeal(sender);
