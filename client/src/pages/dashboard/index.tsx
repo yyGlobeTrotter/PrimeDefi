@@ -23,8 +23,12 @@ const Index: FC<RouteComponentProps> = () => {
 	const { pathname } = useLocation();
 
 	useEffect(() => {
-		if (isAuthenticated && pathname === "/") {
-			navigate("/dashboard");
+		if (isAuthenticated) {
+			if (pathname === "/") {
+				navigate("/dashboard");
+			}
+		} else {
+			navigate("/login");
 		}
 	}, [isAuthenticated, pathname]);
 

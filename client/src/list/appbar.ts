@@ -1,7 +1,7 @@
 import { MdDashboard } from "react-icons/md";
 import { FaWallet, FaMoneyBillWaveAlt } from "react-icons/fa";
 import { IconType } from "react-icons/lib";
-import ROLES from "../global.types";
+import { ROLES } from "../global.types";
 
 export interface AppBarMenuContentType {
 	id: string;

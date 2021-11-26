@@ -1,4 +1,4 @@
-import { FC } from "react";
+import { ChangeEvent, FC } from "react";
 import Typography from "@mui/material/Typography";
 import TextField from "@mui/material/TextField";
 import Grid from "@mui/material/Grid";
@@ -11,7 +11,7 @@ interface CustomInputProps {
 	placeholder?: string;
 	type?: string;
 	value: string;
-	onChange: (e: any) => void;
+	onChange: (e: ChangeEvent<HTMLInputElement>) => void;
 }
 
 const CustomInput: FC<CustomInputProps> = (props) => {

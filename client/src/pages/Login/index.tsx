@@ -1,5 +1,5 @@
-import { useNavigate, RouteComponentProps } from "@reach/router";
-// import { FaFileInvoiceDollar } from "react-icons/fa";
+import { FC, useState, useEffect } from "react";
+import { useLocation, RouteComponentProps, navigate } from "@reach/router";
 import { Formik, Field, Form, FormikHelpers } from "formik";
 import { useMoralis } from "react-moralis";
 import Box from "@mui/material/Box";
@@ -17,7 +17,6 @@ import RadioGroup from "@mui/material/RadioGroup";
 import Snackbar from "@mui/material/Snackbar";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import { FC, useState } from "react";
 import RegisterModal from "./RegisterModal";
 import Alert from "../../components/alert";
 
@@ -32,12 +31,24 @@ interface Values {
 /* eslint react/style-prop-object: 0 */
 // eslint-disable-next-line
 const Login: FC<RouteComponentProps> = () => {
-	const navigate = useNavigate();
-	const { authenticate, Moralis, isInitialized, logout } = useMoralis();
+	const { authenticate, Moralis, isInitialized, isAuthenticated, logout } =
+		useMoralis();
+	const { pathname } = useLocation();
 	const [isNewUser, setIsNewUser] = useState(false);
 	const [isInvestor, setIsInvestor] = useState(false);
 	const [isMismatchedRole, setIsMismatchedRole] = useState(false);
 	const handleClose = () => setIsNewUser(false);
+
+	useEffect(() => {
+		if (!isAuthenticated) {
+			if (pathname === "/") {
+				navigate("/login");
+			}
+		} else {
+			navigate("/dashboard");
+		}
+	}, [pathname, isAuthenticated]);
+
 	return (
 		<>
 			<CssBaseline />
@@ -90,8 +101,9 @@ const Login: FC<RouteComponentProps> = () => {
 									await authenticate();
 								}
 								if (
-									Moralis.User.current()?.attributes.isInvestor === undefined ||
-									Moralis.User.current()?.attributes.isInvestor === null
+									Moralis.User.current()?.attributes?.isInvestor ===
+										undefined ||
+									Moralis.User.current()?.attributes?.isInvestor === null
 								) {
 									setIsNewUser(true);
 								} else if (
@@ -101,7 +113,7 @@ const Login: FC<RouteComponentProps> = () => {
 									if (Moralis.User.current()?.attributes.isInvestor) {
 										navigate("/dashboard");
 									} else {
-										navigate("/issuer");
+										navigate("/dashboard");
 									}
 								} else {
 									setIsMismatchedRole(true);
