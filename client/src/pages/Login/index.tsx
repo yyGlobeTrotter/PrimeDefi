@@ -200,7 +200,9 @@ const Login: FC<RouteComponentProps> = () => {
 						</DialogActions>
 					</Stack>
 				</Dialog>
-			) : null}
+			) : (
+				<></>
+			)}
 			<Snackbar
 				open={isMismatchedRole}
 				autoHideDuration={6000}
