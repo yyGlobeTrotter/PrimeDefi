@@ -28,6 +28,7 @@ const Index: FC<RouteComponentProps> = () => {
 		}
 	}, [isAuthenticated, pathname]);
 
+	// mulai dari appbar
 	return (
 		<Box sx={{ display: "flex" }}>
 			<CssBaseline />
