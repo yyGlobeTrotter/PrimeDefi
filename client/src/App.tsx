@@ -1,7 +1,7 @@
 import { FC, useEffect } from "react";
 import { Router } from "@reach/router";
 import { useMoralis } from "react-moralis";
-import Login from "./pages/Login";
+import Login from "./pages/login/Login";
 import Dashboard from "./pages/dashboard";
 
 const App: FC = () => {

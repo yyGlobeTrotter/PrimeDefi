@@ -201,11 +201,11 @@ contract Deal {
     }
     */
 
-    address private owner; // dapp owner address
-    uint256 private balance; // balance of the Deal contract wallet
-    uint256 private globalFee; // this is the fee our dapp charges; Assume a flat 5% of total issue size for now
-    uint256 private feeRateDecimal; // use 3 for now
-    uint256 private percentageDecimal; // this is used in percentage calculations
+    address private owner;          // dapp owner address
+    uint256 private balance;        // balance of the Deal contract wallet
+    uint256 private globalFee;              // this is the fee our dapp charges; Assume a flat 5% of total issue size for now
+    uint256 private feeRateDecimal;         // use 3 for now
+    uint256 private percentageDecimal;     // this is used in percentage calculations
 
     uint256 public dealCount; // total number of deals created in the dapp
     mapping(string => DealIssuance) deals; // map out ISIN to DealIssuance struct object
@@ -243,10 +243,12 @@ contract Deal {
     }
 
     modifier inState(DealIssuance storage _deal, State _state) {
-        require(_deal.state == _state, "Invalid state.");
+        require(
+            _deal.state == _state,
+            "Invalid state."
+        );
         _;
     }
-
     ///...Add more modifiers here...
 
     ///...Add more modifiers here...
@@ -613,8 +615,9 @@ contract Deal {
         uint256 _term,
         uint256 _interestRate,
         uint256[] memory _interestPaymentDates,
-        uint256 _upfrontFee //uint256 _escrowRatio
-    ) public {
+        uint256 _upfrontFee
+    ) public //uint256 _escrowRatio
+    {
         DealIssuance storage deal = deals[_ISIN];
         //require(deal.insert(_ISIN));   // Using my Library DealSet here
 
@@ -655,15 +658,15 @@ contract Deal {
     }
 
     /**
-     * @notice Step 1 - Close deal offering (book-building) process;
-     *         Step 2 - Decide whether to launch the official issuance period, or cancel;
-     *         Step 3 - Mint DealToken for the issuance, calculate investor allocation then allocate accordingly;
-     *         Step 4 - Transfer investor fund to escrow account & the rest to issuer wallet;
-     *         Step 5 - Transfer deal token from Deal contract to each investor account
-     *         Step 6 - Update all relevant details for the issuance, the issuer, and the investors
-     * @dev TODIItem - To be integrated with Chainlink keepers when timestamp clicks pre-set offerCloseTime
-     */
-    function closeDealOffering(string memory _ISIN) public returns (bool) {
+    * @notice Step 1 - Close deal offering (book-building) process;
+    *         Step 2 - Decide whether to launch the official issuance period, or cancel;
+    *         Step 3 - Mint DealToken for the issuance, calculate investor allocation then allocate accordingly;
+    *         Step 4 - Transfer investor fund to escrow account & the rest to issuer wallet;
+    *         Step 5 - Transfer deal token from Deal contract to each investor account
+    *         Step 6 - Update all relevant details for the issuance, the issuer, and the investors
+    * @dev TODIItem - To be integrated with Chainlink keepers when timestamp clicks pre-set offerCloseTime
+    */
+    function closeDealOffering(string memory _ISIN) public returns(bool) {
         // Need to revise this modifier becoz function will be called by external Chainlink keeper we set up...
         require(
             msg.sender == deals[_ISIN].issuer,
@@ -737,15 +740,9 @@ contract Deal {
                 //transferStableCoin(_ISIN, investorAddr, finalAllocation);
                 transferStableCoin(investorAddr, finalAllocation);
                 transferDealToken(_ISIN, investorAddr, finalAllocation);
-                editInvestorDetailsPostNewIssuance(
-                    _ISIN,
-                    investors[investorAddr]
-                );
+                editInvestorDetailsPostNewIssuance(_ISIN, investors[investorAddr]);
             }
-            deal.totalInvestorBid = safeDiv(
-                safeMul(ratioInDecimal, deal.totalInvestorBid),
-                10**feeRateDecimal
-            );
+            deal.totalInvestorBid = safeDiv( safeMul( ratioInDecimal, deal.totalInvestorBid ), 10**feeRateDecimal );
             deal.state = State.ISSUED;
 
             editIssuerDetailsPostNewIssuance(_ISIN, deal.issuer);
@@ -805,13 +802,11 @@ contract Deal {
         );
     }
 
-    /**
-     * @notice Transfer stablecoin funding from investors to issuer
-     */
+     /**
+    * @notice Transfer stablecoin funding from investors to issuer
+    */
     //function transferStableCoin(string memory _ISIN, address _investorAddr, uint256 _allocation) internal {
-    function transferStableCoin(address _investorAddr, uint256 _allocation)
-        internal
-    {
+    function transferStableCoin(address _investorAddr, uint256 _allocation) internal {
         // transfer investor fund to dapp wallet, and assuming
         //   the owner of stablecoin tracker account has approved & given alllowance to investor wallet
         //ERC20(USDC).transferFrom(_investorAddr, address(this), _allocation);
@@ -870,9 +865,9 @@ contract Deal {
     }
 
     /**
-     * @notice Investor deposit stablecoin fund (USDC) into the dapp
-     * @dev Implement USDC transfer here after getting some test USDCs
-     */
+    * @notice Investor deposit stablecoin fund (USDC) into the dapp
+    * @dev Implement USDC transfer here after getting some test USDCs
+    */
     //function investorMakeDeposit(IERC20 _stableCoin, uint256 _amount) public {
     function investorMakeDeposit(uint256 _amount) public {
         //ERC20(USDC).transfer(address(this), _amount);
@@ -883,7 +878,7 @@ contract Deal {
 
         // Call library InvestorSet to see if investor already exists
         //if(investor.insert(msg.sender)) {
-        totalInvestorCount++;
+            totalInvestorCount++;
         //}
         //emit LogInvestorMakeDeposit(msg.sender, _amount);
     }
@@ -928,23 +923,16 @@ contract Deal {
     }
 
     /**
-     * @notice Investor gets details of a bid made earlier
-     */
-    function getBidDetails(string memory _ISIN, address _addr)
-        public
-        view
-        returns (
-            bool isClosed,
-            bool isSuccessful,
-            uint256 lockedInAmount
-        )
+    * @notice Investor gets details of a bid made earlier
+    */
+    function getBidDetails(string memory _ISIN, address _addr) public view returns(
+        bool isClosed,
+        bool isSuccessful,
+        uint256 lockedInAmount)
     {
         Investor storage investor = investors[msg.sender];
-        require(
-            msg.sender == _addr,
-            "DEAL:: getBidDetails: Caller is NOT the investor"
-        );
-        return (
+        require(msg.sender == _addr, "DEAL:: getBidDetails: Caller is NOT the investor");
+        return(
             investor.isOfferClosed[_ISIN],
             investor.isBidSuccessful[_ISIN],
             investor.lockedInBid[_ISIN]
@@ -952,48 +940,28 @@ contract Deal {
     }
 
     /**
-     * @notice Investor edits an already-placed bid
-     * @dev this is only allowed before deal offer period is closed
-     */
-    function investorEditBid(
-        string memory _ISIN,
-        address _addr,
-        uint256 _newBidAmount
-    ) public {
+    * @notice Investor edits an already-placed bid
+    * @dev this is only allowed before deal offer period is closed
+    */
+    function investorEditBid(string memory _ISIN, address _addr, uint256 _newBidAmount) public {
         DealIssuance storage deal = deals[_ISIN];
         Investor storage investor = investors[msg.sender];
 
         //require(msg.sender == deal.investors[], "DEAL:: investorEditBid: Not an investor for this deal");    // need to verify if msg.sender is an investor for this deal
-        require(
-            deals[_ISIN].isOfferLive,
-            "DEAL:: investorEditBid: You cannot change a bid if the offer is NOT live"
-        );
-        require(
-            deal.investorAlreadyBid[msg.sender],
-            "DEAL:: investorEditBid: you haven't made a bid yet"
-        );
-        require(
-            _newBidAmount <= investor.totalBalance,
-            "DEAL:: investorEditBid: insuffient fund"
-        );
+        require(deals[_ISIN].isOfferLive, "DEAL:: investorEditBid: You cannot change a bid if the offer is NOT live");
+        require(deal.investorAlreadyBid[msg.sender], "DEAL:: investorEditBid: you haven't made a bid yet");
+        require(_newBidAmount <= investor.totalBalance, "DEAL:: investorEditBid: insuffient fund");
 
-        deal.totalInvestorBid = safeAdd(
-            safeSub(deal.totalInvestorBid, investor.lockedInBid[_ISIN]),
-            _newBidAmount
-        );
+        deal.totalInvestorBid = safeAdd( safeSub( deal.totalInvestorBid, investor.lockedInBid[_ISIN] ), _newBidAmount );
 
-        investor.totalLockedInBid = safeAdd(
-            safeSub(investor.totalLockedInBid, investor.lockedInBid[_ISIN]),
-            _newBidAmount
-        );
-        investor.availBalance = safeSub(
-            investor.totalBalance,
-            investor.totalLockedInBid
-        );
+        investor.totalLockedInBid = safeAdd( safeSub( investor.totalLockedInBid, investor.lockedInBid[_ISIN] ), _newBidAmount );
+        investor.availBalance = safeSub(investor.totalBalance, investor.totalLockedInBid);
 
         investor.lockedInBid[_ISIN] = _newBidAmount;
         //*** emit LogInvestorEditBid(); ***
     }
+
+
 
     function investorCancelBid(string memory _ISIN, address _addr) public {
         //......

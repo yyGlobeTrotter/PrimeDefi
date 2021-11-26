@@ -9,6 +9,7 @@ import MenuIcon from "@mui/icons-material/Menu";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import { useMoralis } from "react-moralis";
+import { navigate } from "@reach/router";
 import InnerDrawer from "./InnerDrawer";
 
 const drawerWidth = 240;
@@ -19,7 +20,7 @@ interface AppBarIndexProps {
 
 const AppBarIndex: FC<AppBarIndexProps> = (props) => {
 	const { pathname } = props;
-	const { logout } = useMoralis();
+	const { logout, user } = useMoralis();
 	const [mobileOpen, setMobileOpen] = useState<boolean>(false);
 
 	/**
@@ -35,6 +36,7 @@ const AppBarIndex: FC<AppBarIndexProps> = (props) => {
 	const onLogout = async () => {
 		try {
 			await logout();
+			navigate("/login");
 		} catch (e) {
 			// Should be replaced by error snackbar
 			// eslint-disable-next-line
@@ -93,7 +95,10 @@ const AppBarIndex: FC<AppBarIndexProps> = (props) => {
 						},
 					}}
 				>
-					<InnerDrawer pathname={pathname} />
+					<InnerDrawer
+						pathname={pathname}
+						isInvestor={user?.attributes.isInvestor}
+					/>
 				</Drawer>
 				<Drawer
 					variant="permanent"
@@ -106,7 +111,10 @@ const AppBarIndex: FC<AppBarIndexProps> = (props) => {
 					}}
 					open
 				>
-					<InnerDrawer pathname={pathname} />
+					<InnerDrawer
+						pathname={pathname}
+						isInvestor={user?.attributes.isInvestor}
+					/>
 				</Drawer>
 			</Box>
 		</>
