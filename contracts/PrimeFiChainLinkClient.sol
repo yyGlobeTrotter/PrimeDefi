@@ -21,6 +21,7 @@ contract PrimeFiChainLinkClient is ChainlinkClient, ConfirmedOwner, IPrimeFiChai
   string public chainlinkNodeJobId = "db4bf74b01d6462f9151607832ba84f5";
 
   mapping (bytes32 => address) requestIdToIssuer;
+  mapping (bytes32 => address) requestIdToSender;
 
   constructor() ConfirmedOwner(msg.sender){
     setPublicChainlinkToken();
@@ -34,12 +35,13 @@ contract PrimeFiChainLinkClient is ChainlinkClient, ConfirmedOwner, IPrimeFiChai
     chainlinkNodeJobId = _newChainlinkNodeJobId;
   }
 
-  function requestRating(string memory _issuerName) override external
+  function requestRating(address _issuerAddress, string memory _issuerName) override external
     {
         Chainlink.Request memory req = buildChainlinkRequest(stringToBytes32(chainlinkNodeJobId), address(this), this.fulfillRating.selector);
         req.add("name", _issuerName);
         sendChainlinkRequestTo(oracle, req, ORACLE_PAYMENT);
-        requestIdToIssuer[req.id] = msg.sender;
+        requestIdToIssuer[req.id] = _issuerAddress;
+        requestIdToSender[req.id] = msg.sender;
     }
 
 
@@ -48,8 +50,9 @@ contract PrimeFiChainLinkClient is ChainlinkClient, ConfirmedOwner, IPrimeFiChai
     recordChainlinkFulfillment(_requestId)
   {
     address issuer = requestIdToIssuer[_requestId];
-    IDeal deal = IDeal(issuer);
-    deal.
+    address sender = requestIdToSender[_requestId];
+    IDeal deal = IDeal(sender);
+    deal.setIssuerRating(issuer, string(abi.encodePacked(_rating)));
   }
 
   function getChainlinkToken() public view returns (address) {
