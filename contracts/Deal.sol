@@ -100,7 +100,6 @@ contract Deal {
         CANCELLED,      // deal issuance has been cancelled due to insuffient fund raised, or other reasons
         REDEEMED        // the end of deal lifecycle - maturity or early redemption; principle investment and any last coupons are paid out, all o/s deal tokens are destroyed
     }
-
     struct Token {
         address tokenAddr;
         address issuer;
@@ -108,11 +107,9 @@ contract Deal {
         string symbol;      // use issuance ISIN as token symbol
         uint256 totalSupply;    // finalSize divided by facevalue
     }
-
     struct DealIssuance {
 uint256 id;     // difficult to handle string in solidity, better to add a numeric identifier!!!
         string ISIN;    // the 12-digit unique identifier of an issuance
-
         string dealName;
         uint256 initSize;   // front-end needs to pass this value in units of our stablecoin of choice
         uint256 minSize;    // minimum launch size, same unit of measurement as above
@@ -127,52 +124,41 @@ uint256 id;     // difficult to handle string in solidity, better to add a numer
         uint[] interestPaymentDates;    // for now start with zero-coupon bond (meaning no interim coupons but bond selling at a discount to face value); keep the field for future dev
         uint256 upfrontFee;     // this is the fee Issuer wants to charge for the issuance (i.e. 2,000 means 2% fee of total issue size)
         uint256 escrowRatio;   // for now use 5% of total size; later on change to more specific, i.e. 1 or 2 coupon payments equivalent
-
         uint256 finalSize;      // this is the final issuance size, determined by min(initSize, total investor bids), and only if total investor bids >= minSize
         uint256 totalEscrowAmount;
-
         Token token;
         State state;
         bool isOfferLive;
         bool isOfferClosed;
         mapping( string => bool ) isExistingISIN;   // map out ISIN to whether ISIN's been used in existing issuance
-
         address issuer;
         address[] investors;
-
         uint256 investorCount;
         uint256 totalInvestorBid;
         mapping( address => bool ) investorAlreadyBid;
     }
-
     struct Issuer {
         address addr;
         string name;
         string creditRating;
         mapping(address => bool) isExisting;
         string[] dealsIssued;    // A vector of issuance ISINs
-
         uint256 totalIssuedAmount;
         uint256 totalEscrowFundLockedIn;
         uint256 totalAvailBalance;
-
         mapping(string => uint256) finalSize;   // mapping deal ISIN to final size raised for that issuance, including escrow allocation
         mapping(string => uint256) escrowFundLockedIn;   //mapping deal ISIN to allocated escrow fund lock-in in Issuer wallet for that particular issuance
         mapping(string => uint256) availBalance;    //mapping deal ISIN to available balance of the Issuer wallet (finalSize - escrow at the beginning; can be zero in between payment dates; must have enough fund 5bd before next payment date)
     }
-
     struct Investor {
         address addr;
         mapping(address => bool) isExisting;
-
 uint256 dealsBidCount;
 uint256[] dealsBidId;  // a list of ids of deals bidded
 string[] dealsBidISIN;  // a list of ISINs of deals bidded
-
         uint256 totalBalance;       // in terms of stablecoin
         uint256 totalLockedInBid;   // in terms of stablecoin
         uint256 availBalance;       // totalBalance minus totalLockedInBid
-
         mapping(string => bool) isOfferClosed;      // mapping deal ISIN to a boolean; "true" means that the issuance offer period is closed
         mapping(string => bool) isBidSuccessful;    // mapping deal ISIN to a boolean; "true" means that investor'd bid to an issuance is successful
         mapping(string => uint256) lockedInBid;     // mapping deal ISIN to investment amount the investor has allocated to that deal
@@ -817,7 +803,6 @@ investor.dealsBidCount++;
     function issuerWithdraw(address payable _issuerExternalAddr, string memory _ISIN, uint256 _amount) public {
         require(msg.sender == deals[_ISIN].issuer, "DEAL:: issuerWithdrawFund: Caller is NOT the issuer");
         require(_amount <= issuers[msg.sender][_ISIN].availableBalance, "DEAL:: issuerWithdrawFund: Not enough available fund");
-
         issuers[msg.sender][_ISIN].availableBalance -= _amount;
         _issuerExternalAddr.transfer(_amount);
     } */
@@ -843,11 +828,8 @@ investor.dealsBidCount++;
 /// ===============================================
 /**
     function issuerTopUpEscrow(string memory _ISIN) public {}
-
     function payInterimCoupon()
-
     function redeemAtMaturity()
-
     function handleDefaultEvent()
 */
 }

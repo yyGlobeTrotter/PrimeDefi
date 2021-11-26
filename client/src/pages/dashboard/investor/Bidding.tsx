@@ -1,7 +1,7 @@
+import { FC } from "react";
 import { RouteComponentProps } from "@reach/router";
 
-// eslint-disable-next-line
-const Bidding = (_props: RouteComponentProps): JSX.Element => {
+const Bidding: FC<RouteComponentProps> = () => {
 	return <></>;
 };
 

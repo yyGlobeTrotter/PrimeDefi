@@ -4,6 +4,7 @@ import { MoralisProvider } from "react-moralis";
 import { ChakraProvider } from "@chakra-ui/react";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import App from "./App";
+import GlobalContextProvider from "./context/GlobalContext";
 
 const theme = createTheme({});
 
@@ -15,7 +16,9 @@ ReactDOM.render(
 					appId={process.env.REACT_APP_MORALIS_APP_ID ?? ""}
 					serverUrl={process.env.REACT_APP_MORALIS_SERVER_URL ?? ""}
 				>
-					<App />
+					<GlobalContextProvider>
+						<App />
+					</GlobalContextProvider>
 				</MoralisProvider>
 			</ThemeProvider>
 		</ChakraProvider>
