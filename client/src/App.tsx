@@ -1,7 +1,7 @@
 import { FC, useEffect } from "react";
 import { Router } from "@reach/router";
 import { useMoralis } from "react-moralis";
-import Login from "./pages/login/Login";
+import Login from "./pages/Login";
 import Dashboard from "./pages/dashboard";
 
 const App: FC = () => {
@@ -17,8 +17,7 @@ const App: FC = () => {
 
 	return (
 		<Router>
-			<Login path="login" />
-			<Dashboard path="/*" />
+			{isAuthenticated ? <Dashboard path="/*" /> : <Login path="login" />}
 		</Router>
 	);
 };
