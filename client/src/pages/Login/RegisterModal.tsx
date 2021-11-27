@@ -118,7 +118,7 @@ const RegisterModal = ({
 					},
 					params: {
 						abi: Deal.abi,
-						contractAddress: "0x39232f63261FE6D227a46e79f420a94FebB1d150",
+						contractAddress: "0x7af9B4e4006478160569BF956aE2241F49C43104",
 						functionName: "createIssuer",
 						params: {
 							_name: `${values.name} - ${values.representativeName}`,

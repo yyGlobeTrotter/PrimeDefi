@@ -65,7 +65,7 @@ const UpdateDeal: FC<RouteComponentProps> = () => {
 						params: {
 							abi,
 							functionName: "editDealIssuance",
-							contractAddress: "0x39232f63261FE6D227a46e79f420a94FebB1d150",
+							contractAddress: "0x7af9B4e4006478160569BF956aE2241F49C43104",
 							params: {
 								...values,
 								_interestPaymentDates: ["1637738471"],

@@ -48,7 +48,7 @@ const createDealTextFields: Array<CreateDealTextFieldsType> = [
 	{
 		title: "Amount Required for Escrow",
 		name: "_offerPrice",
-		// disabled: true,
+		disabled: true,
 		subtitle: "This is auto-calculated based on the 5% initial offer size",
 		xs: 12,
 		md: 6,
@@ -74,7 +74,7 @@ const createDealTextFields: Array<CreateDealTextFieldsType> = [
 	},
 	{
 		title: "Bond Issue Date (optional)",
-		name: "_interestRate",
+		name: "_bondIssueDate",
 		placeholder: "DD/MM/YYYY",
 		xs: 12,
 		md: 6,

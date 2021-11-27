@@ -1,4 +1,4 @@
-import { FC, useState, useCallback, useEffect } from "react";
+import { FC, useState, useEffect } from "react";
 import { navigate, RouteComponentProps } from "@reach/router";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
