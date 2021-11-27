@@ -10,16 +10,16 @@ const theme = createTheme({});
 
 ReactDOM.render(
 	<StrictMode>
-			<ThemeProvider theme={theme}>
-				<MoralisProvider
-					appId={process.env.REACT_APP_MORALIS_APP_ID ?? ""}
-					serverUrl={process.env.REACT_APP_MORALIS_SERVER_URL ?? ""}
-				>
-					<GlobalContextProvider>
-						<App />
-					</GlobalContextProvider>
-				</MoralisProvider>
-			</ThemeProvider>
+		<ThemeProvider theme={theme}>
+			<MoralisProvider
+				appId={process.env.REACT_APP_MORALIS_APP_ID ?? ""}
+				serverUrl={process.env.REACT_APP_MORALIS_SERVER_URL ?? ""}
+			>
+				<GlobalContextProvider>
+					<App />
+				</GlobalContextProvider>
+			</MoralisProvider>
+		</ThemeProvider>
 	</StrictMode>,
 	document.getElementById("root"),
 );

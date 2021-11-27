@@ -18,7 +18,7 @@ const updateDealTextFields: Array<UpdateDealTextFieldsType> = [
 		name: "_ISIN",
 		xs: 12,
 		md: 6,
-		disabled: true
+		disabled: true,
 	},
 	{
 		title: "Deal Name",
@@ -45,7 +45,7 @@ const updateDealTextFields: Array<UpdateDealTextFieldsType> = [
 		name: "_faceValue",
 		xs: 12,
 		md: 6,
-		disabled: true
+		disabled: true,
 	},
 	{
 		title: "Amount Required for Escrow",
@@ -86,7 +86,7 @@ const updateDealTextFields: Array<UpdateDealTextFieldsType> = [
 		name: "_upfrontFee",
 		xs: 12,
 		md: 3,
-		disabled: true
+		disabled: true,
 	},
 ];
 

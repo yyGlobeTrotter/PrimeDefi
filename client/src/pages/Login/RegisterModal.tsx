@@ -87,7 +87,7 @@ const RegisterModal = ({
 			const object = await query.first();
 			if (object) {
 				const kycFile = new Moralis.File(documents[0]?.name, {
-					base64: await file2Base64(documents[0])
+					base64: await file2Base64(documents[0]),
 				});
 				object.set("isInvestor", isInvestor);
 				object.set("holdingName", values.name);

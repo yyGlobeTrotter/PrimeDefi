@@ -175,9 +175,10 @@ const Dashboard: FC<RouteComponentProps> = () => {
 												fullWidth
 												onClick={() => navigate("/deal/view/1")}
 											>
-												{isInitialized && Moralis.User.current()?.attributes?.isInvestor
-														? "BID"
-														: "EDIT"}
+												{isInitialized &&
+												Moralis.User.current()?.attributes?.isInvestor
+													? "BID"
+													: "EDIT"}
 											</Button>
 										</CardActions>
 									</Card>
