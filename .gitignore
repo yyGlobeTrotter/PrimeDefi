@@ -425,3 +425,4 @@ package-lock.json
 !/client/src/public
 !/client/src/Public
 .secret
+*.zip
