@@ -1,10 +1,17 @@
 /* eslint-disable no-underscore-dangle */
-import { FC, useMemo } from "react";
+import { ChangeEvent, FC, useMemo, useRef, useState } from "react";
 import { navigate, RouteComponentProps } from "@reach/router";
-import { useWeb3ExecuteFunction, useMoralis } from "react-moralis";
+import {
+	useWeb3ExecuteFunction,
+	useMoralis,
+	useMoralisFile,
+} from "react-moralis";
 import { FormikProps, useFormik } from "formik";
 import Grid from "@mui/material/Grid";
 import Button from "@mui/material/Button";
+import Typography from "@mui/material/Typography";
+import IconButton from "@mui/material/IconButton";
+import DeleteIcon from "@mui/icons-material/Delete";
 import Input from "../../../../components/Input";
 import BasicLayout from "../../../../layout/BasicLayout";
 import createDealTextFields, {
@@ -19,11 +26,36 @@ interface CreateDealInputProps {
 const CreateDeal: FC<RouteComponentProps> = () => {
 	const { abi } = Deal;
 	const { fetch, error, isFetching, isLoading } = useWeb3ExecuteFunction();
+	const { isUploading, saveFile } = useMoralisFile();
 	const { Moralis } = useMoralis();
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	const fileInputRef = useRef<any>();
+	const initialFileData = { name: "", fileObject: {}, ipfs: "" };
+	const [fileData, setFileData] = useState(initialFileData);
 	const disableButton = useMemo(
-		() => isFetching || isLoading,
-		[isFetching, isLoading],
+		() => isFetching || isLoading || isUploading,
+		[isFetching, isLoading, isUploading],
 	);
+
+	const handleFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
+		try {
+			const fileName = event.target.value;
+			const fileObject = event.target.files?.[0] ?? { uri: "" };
+			saveFile("test.jpg", fileObject, {
+				saveIPFS: true,
+				onSuccess: (result) => {
+					setFileData({
+						name: fileName,
+						fileObject,
+						ipfs: result?._url,
+					});
+				},
+			});
+		} catch (e) {
+			// eslint-disable-next-line no-console
+			console.error(e);
+		}
+	};
 
 	const formik: FormikProps<CreateDealInputProps> =
 		useFormik<CreateDealInputProps>({
@@ -112,9 +144,41 @@ const CreateDeal: FC<RouteComponentProps> = () => {
 								);
 							})}
 							<Grid item xs={12} md={6}>
-								<Button variant="contained" fullWidth>
-									Upload Prospectus
-								</Button>
+								{fileData?.name ? (
+									<Grid container alignItems="center">
+										<Grid item>
+											<a href={fileData?.ipfs} target="_blank" rel="noreferrer">
+												<Typography>{fileData?.name}</Typography>
+											</a>
+										</Grid>
+										<Grid item>
+											<IconButton
+												aria-label="delete"
+												color="error"
+												onClick={() => setFileData(initialFileData)}
+											>
+												<DeleteIcon />
+											</IconButton>
+										</Grid>
+									</Grid>
+								) : (
+									<>
+										<Button
+											variant="contained"
+											fullWidth
+											onClick={() => fileInputRef.current.click()}
+										>
+											Upload Prospectus
+										</Button>
+										<input
+											onChange={handleFileChange}
+											multiple={false}
+											ref={fileInputRef}
+											type="file"
+											hidden
+										/>
+									</>
+								)}
 							</Grid>
 						</Grid>
 					</Grid>
