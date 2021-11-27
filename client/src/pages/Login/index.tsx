@@ -48,7 +48,6 @@ const Login: FC<RouteComponentProps> = () => {
 			navigate("/dashboard");
 		}
 	}, [pathname, isAuthenticated]);
-
 	return (
 		<>
 			<CssBaseline />

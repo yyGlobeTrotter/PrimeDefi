@@ -1,8 +1,8 @@
 import { StrictMode } from "react";
 import ReactDOM from "react-dom";
 import { MoralisProvider } from "react-moralis";
-import { ChakraProvider } from "@chakra-ui/react";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
+import * as serviceWorker from "./serviceWorker";
 import App from "./App";
 import GlobalContextProvider from "./context/GlobalContext";
 
@@ -10,7 +10,6 @@ const theme = createTheme({});
 
 ReactDOM.render(
 	<StrictMode>
-		<ChakraProvider>
 			<ThemeProvider theme={theme}>
 				<MoralisProvider
 					appId={process.env.REACT_APP_MORALIS_APP_ID ?? ""}
@@ -21,7 +20,11 @@ ReactDOM.render(
 					</GlobalContextProvider>
 				</MoralisProvider>
 			</ThemeProvider>
-		</ChakraProvider>
 	</StrictMode>,
 	document.getElementById("root"),
 );
+
+// If you want your app to work offline and load faster, you can change
+// unregister() to register() below. Note this comes with some pitfalls.
+// Learn more about service workers: https://cra.link/PWA
+serviceWorker.unregister();

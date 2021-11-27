@@ -21,6 +21,7 @@ import Alert from "../../components/alert";
 
 /* eslint react/jsx-curly-brace-presence: 0 */
 /* eslint react/jsx-props-no-spreading: 0 */
+/* eslint prefer-destructuring: 0 */
 // eslint-disable-next-line
 interface RegisterInfo {
 	address: string;
@@ -42,10 +43,21 @@ const RegisterModal = ({
 	});
 	const handleOpen = () => setOpen(true);
 	const handleClose = () => setOpen(false);
-	const [, setDocuments] = useState(false);
+	const [documents, setDocuments] = useState<File[]>([]);
 	const handleDocuments = (e: any) => setDocuments(e.target.files);
 	const { fetch } = useWeb3ExecuteFunction();
-
+	const file2Base64 = (file: File): Promise<string> => {
+		return new Promise<string>((resolve, reject) => {
+			const reader = new FileReader();
+			reader.readAsDataURL(file);
+			reader.onload = () => {
+				if (reader.result) {
+					resolve(reader.result.toString());
+				}
+			};
+			reader.onerror = (error) => reject(error);
+		});
+	};
 	const closeSnackbar = () => {
 		if (transactionStatus.isSuccess) {
 			if (isInvestor) {
@@ -65,17 +77,25 @@ const RegisterModal = ({
 			creditRating: "",
 		},
 		onSubmit: async (values) => {
+			if (documents.length === 0) {
+				alert("You need to upload a KYC document");
+				return;
+			}
 			const User = Moralis.Object.extend("_User");
 			const query = new Moralis.Query(User);
 			query.equalTo("ethAddress", values.address);
 			const object = await query.first();
 			if (object) {
+				const kycFile = new Moralis.File(documents[0]?.name, {
+					base64: await file2Base64(documents[0])
+				});
 				object.set("isInvestor", isInvestor);
 				object.set("holdingName", values.name);
 				object.set("representativeName", values.representativeName);
 				object.set("representativeContact", values.representativeContact);
 				object.set("representativeAddress", values.representativeAddress);
 				object.set("creditRating", values.creditRating);
+				object.set("representativeKycFile", kycFile);
 				object.save();
 				fetch({
 					onSuccess: () => {
@@ -98,7 +118,7 @@ const RegisterModal = ({
 					},
 					params: {
 						abi: Deal.abi,
-						contractAddress: "0x3271fb4BC23661Bd8cec78D9554284C0Fa16Bb86",
+						contractAddress: "0x39232f63261FE6D227a46e79f420a94FebB1d150",
 						functionName: "createIssuer",
 						params: {
 							_name: `${values.name} - ${values.representativeName}`,
@@ -221,7 +241,6 @@ const RegisterModal = ({
 								<label htmlFor="contained-button-file">
 									<input
 										id="contained-button-file"
-										multiple
 										type="file"
 										onChange={handleDocuments}
 										style={{ display: "none" }}
