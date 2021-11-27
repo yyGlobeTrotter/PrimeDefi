@@ -1,3 +1,4 @@
+/* eslint-disable no-underscore-dangle */
 import { FC, useState, useEffect } from "react";
 import { navigate, RouteComponentProps } from "@reach/router";
 import Card from "@mui/material/Card";
@@ -11,8 +12,14 @@ import Box from "@mui/material/Box";
 import Tabs from "@mui/material/Tabs";
 import Tab from "@mui/material/Tab";
 import Pagination from "@mui/material/Pagination";
-import { useMoralis } from "react-moralis";
+import {
+	useMoralis,
+	useMoralisWeb3ApiCall,
+	useMoralisWeb3Api,
+} from "react-moralis";
 import BasicLayout from "../../layout/BasicLayout";
+import { useGlobalContext } from "../../context/GlobalContext";
+import Deal from "../../contracts/Deal.json";
 
 /* eslint react/jsx-props-no-spreading: 0 */
 /* eslint @typescript-eslint/ban-types: 0 */
@@ -53,33 +60,60 @@ function a11yProps(index: number) {
 
 const Dashboard: FC<RouteComponentProps> = () => {
 	const [value, setValue] = useState(0);
-	const { Moralis, isInitialized } = useMoralis();
 	const [deals, setDeals] = useState<Array<Object>>([]);
+	const { abi } = Deal;
+	const { Moralis, isInitialized, isWeb3Enabled } = useMoralis();
+	const { chain } = useGlobalContext();
+	const Web3Api = useMoralisWeb3Api();
 
-	useEffect(() => {
-		if (deals.length === 0 && isInitialized) {
-			const Deal = Moralis.Object.extend("Deal");
-			const query = new Moralis.Query(Deal);
-			query.find().then((responses) => {
-				// responses.map(async (response) => {
-				// 	console.log(response.attributes.issuer);
-				// 	const User = Moralis.Object.extend("_User");
-				// 	const queryTwo = new Moralis.Query(User);
-				// 	queryTwo.equalTo("ethAddress", response.attributes.issuer);
-				// 	console.log(await queryTwo.first());
-				// 	const data = response.attributes;
-				// 	// data.issuer =
-				// 	return data;
-				// })
+	const { fetch } = useMoralisWeb3ApiCall(Web3Api.native.getContractEvents, {
+		chain,
+		address: "0x7af9B4e4006478160569BF956aE2241F49C43104",
+		topic: "0xf4ff7e1fcb22d6f38926a942322a8f0987d86cdbfed9991556932ad24c1d2e6f",
+		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+		// @ts-ignore
+		abi: abi.find(
+			(event) =>
+				event.name === "LogCreateDealIssuance" && event.type === "event",
+		),
+	});
 
-				setDeals(responses);
-			});
-		}
-	}, [isInitialized]);
+	// useEffect(() => {
+	// 	if (deals.length === 0 && isInitialized) {
+	// 		const Deal = Moralis.Object.extend("Deal");
+	// 		const query = new Moralis.Query(Deal);
+	// 		query.find().then((responses) => {
+	// 			// responses.map(async (response) => {
+	// 			// 	console.log(response.attributes.issuer);
+	// 			// 	const User = Moralis.Object.extend("_User");
+	// 			// 	const queryTwo = new Moralis.Query(User);
+	// 			// 	queryTwo.equalTo("ethAddress", response.attributes.issuer);
+	// 			// 	console.log(await queryTwo.first());
+	// 			// 	const data = response.attributes;
+	// 			// 	// data.issuer =
+	// 			// 	return data;
+	// 			// })
+
+	// 			setDeals(responses);
+	// 		});
+	// 	}
+	// }, [isInitialized]);
 
 	const handleChange = (event: React.SyntheticEvent, newValue: number) => {
 		setValue(newValue);
 	};
+
+	useEffect(() => {
+		if (isInitialized && isWeb3Enabled) {
+			fetch({
+				onSuccess: (res) => {
+					// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+					// @ts-ignore
+					setDeals(res?.result.map((deal: Object) => deal?.data));
+				},
+			});
+		}
+	}, [isInitialized, isWeb3Enabled]);
 
 	return (
 		<>
@@ -110,25 +144,7 @@ const Dashboard: FC<RouteComponentProps> = () => {
 					columnSpacing={{ xs: 1, sm: 2, md: 3 }}
 				>
 					{deals.map((deal: any) => {
-						const {
-							// issuer,
-							bondIssueDate,
-							dealName,
-							faceValue,
-							initialOfferSize,
-							interestRate,
-							minLaunchSize,
-							offerEndDate,
-							offerStartDate,
-							state,
-							term,
-							upfrontFee,
-						} = deal.attributes;
-						// const User = Moralis.Object.extend("_User");
-						// const query = new Moralis.Query(User);
-						// query.equalTo("ethAddress", issuer);
-						// const object = await query.first();
-						// console.log(object);
+						console.log(deal);
 						return (
 							<>
 								<Grid item xs={12} sm={6} md={6} lg={3}>
@@ -136,7 +152,7 @@ const Dashboard: FC<RouteComponentProps> = () => {
 										<CardActionArea>
 											<CardContent>
 												<Typography gutterBottom variant="h5" component="div">
-													{dealName}
+													{deal._dealName}
 												</Typography>
 												<Divider />
 												<Grid
@@ -147,7 +163,7 @@ const Dashboard: FC<RouteComponentProps> = () => {
 												>
 													<Grid item xs={6}>
 														<Typography variant="h6">Issuer</Typography>
-														<Typography>Credit Suisse</Typography>
+														<Typography>{deal._issuer}</Typography>
 													</Grid>
 													<Grid item xs={6}>
 														<Typography variant="h6">Credit Rating</Typography>
@@ -155,16 +171,18 @@ const Dashboard: FC<RouteComponentProps> = () => {
 													</Grid>
 													<Grid item xs={6}>
 														<Typography variant="h6">Interest Rate</Typography>
-														<Typography>{interestRate}</Typography>
+														<Typography>
+															{Moralis.Units.FromWei(deal?._interestRate, 3)}
+														</Typography>
 													</Grid>
 													<Grid item xs={6}>
 														<Typography variant="h6">Term</Typography>
-														<Typography>{term} days</Typography>
+														<Typography>{deal?._term} days</Typography>
 													</Grid>
 												</Grid>
 												<LinearProgress variant="determinate" value={50} />
 												<Typography variant="body2" marginTop={2} align="right">
-													USDC 50,000,000/{minLaunchSize} (50%)
+													USDC 50,000,000/{deal?._minSize} (50%)
 												</Typography>
 											</CardContent>
 										</CardActionArea>
