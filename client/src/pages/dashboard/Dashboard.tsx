@@ -1,4 +1,4 @@
-import { FC, useState } from "react";
+import { FC, useState, useCallback, useEffect } from "react";
 import { navigate, RouteComponentProps } from "@reach/router";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
@@ -11,9 +11,13 @@ import Box from "@mui/material/Box";
 import Tabs from "@mui/material/Tabs";
 import Tab from "@mui/material/Tab";
 import Pagination from "@mui/material/Pagination";
+import { useMoralis } from "react-moralis";
 import BasicLayout from "../../layout/BasicLayout";
 
 /* eslint react/jsx-props-no-spreading: 0 */
+/* eslint @typescript-eslint/ban-types: 0 */
+/* eslint react-hooks/exhaustive-deps: 0 */
+/* eslint @typescript-eslint/return-await: 0 */
 interface TabPanelProps {
 	children?: React.ReactNode;
 	index: number;
@@ -49,10 +53,34 @@ function a11yProps(index: number) {
 
 const Dashboard: FC<RouteComponentProps> = () => {
 	const [value, setValue] = useState(0);
+	const { Moralis, isInitialized } = useMoralis();
+	const [deals, setDeals] = useState<Array<Object>>([]);
+
+	useEffect(() => {
+		if (deals.length === 0 && isInitialized) {
+			const Deal = Moralis.Object.extend("Deal");
+			const query = new Moralis.Query(Deal);
+			query.find().then((responses) => {
+				// responses.map(async (response) => {
+				// 	console.log(response.attributes.issuer);
+				// 	const User = Moralis.Object.extend("_User");
+				// 	const queryTwo = new Moralis.Query(User);
+				// 	queryTwo.equalTo("ethAddress", response.attributes.issuer);
+				// 	console.log(await queryTwo.first());
+				// 	const data = response.attributes;
+				// 	// data.issuer =
+				// 	return data;
+				// })
+
+				setDeals(responses);
+			});
+		}
+	}, [isInitialized]);
 
 	const handleChange = (event: React.SyntheticEvent, newValue: number) => {
 		setValue(newValue);
 	};
+
 	return (
 		<>
 			<BasicLayout
@@ -81,45 +109,83 @@ const Dashboard: FC<RouteComponentProps> = () => {
 					rowSpacing={{ xs: 1, sm: 2, md: 3 }}
 					columnSpacing={{ xs: 1, sm: 2, md: 3 }}
 				>
-					<Grid item xs={12} sm={6} md={6} lg={3}>
-						<Card>
-							<CardActionArea>
-								<CardContent>
-									<Typography gutterBottom variant="h5" component="div">
-										EVERRE 8.25 03/23/22
-									</Typography>
-									<Divider />
-									<Grid container spacing={2} marginY={1} marginBottom={2}>
-										<Grid item xs={6}>
-											<Typography variant="h6">Issuer</Typography>
-											<Typography>Credit Suisse</Typography>
-										</Grid>
-										<Grid item xs={6}>
-											<Typography variant="h6">Credit Rating</Typography>
-											<Typography>AAA</Typography>
-										</Grid>
-										<Grid item xs={6}>
-											<Typography variant="h6">Interest Rate</Typography>
-											<Typography>0%</Typography>
-										</Grid>
-										<Grid item xs={6}>
-											<Typography variant="h6">Term</Typography>
-											<Typography>2 Years</Typography>
-										</Grid>
-									</Grid>
-									<LinearProgress variant="determinate" value={50} />
-									<Typography variant="body2" marginTop={2} align="right">
-										USDC 50,000,000/100,000,000 (50%)
-									</Typography>
-								</CardContent>
-							</CardActionArea>
-							<CardActions>
-								<Button size="small" color="primary" fullWidth>
-									BID
-								</Button>
-							</CardActions>
-						</Card>
-					</Grid>
+					{deals.map((deal: any) => {
+						const {
+							// issuer,
+							bondIssueDate,
+							dealName,
+							faceValue,
+							initialOfferSize,
+							interestRate,
+							minLaunchSize,
+							offerEndDate,
+							offerStartDate,
+							state,
+							term,
+							upfrontFee,
+						} = deal.attributes;
+						// const User = Moralis.Object.extend("_User");
+						// const query = new Moralis.Query(User);
+						// query.equalTo("ethAddress", issuer);
+						// const object = await query.first();
+						// console.log(object);
+						return (
+							<>
+								<Grid item xs={12} sm={6} md={6} lg={3}>
+									<Card>
+										<CardActionArea>
+											<CardContent>
+												<Typography gutterBottom variant="h5" component="div">
+													{dealName}
+												</Typography>
+												<Divider />
+												<Grid
+													container
+													spacing={2}
+													marginY={1}
+													marginBottom={2}
+												>
+													<Grid item xs={6}>
+														<Typography variant="h6">Issuer</Typography>
+														<Typography>Credit Suisse</Typography>
+													</Grid>
+													<Grid item xs={6}>
+														<Typography variant="h6">Credit Rating</Typography>
+														<Typography>AAA</Typography>
+													</Grid>
+													<Grid item xs={6}>
+														<Typography variant="h6">Interest Rate</Typography>
+														<Typography>{interestRate}</Typography>
+													</Grid>
+													<Grid item xs={6}>
+														<Typography variant="h6">Term</Typography>
+														<Typography>{term} days</Typography>
+													</Grid>
+												</Grid>
+												<LinearProgress variant="determinate" value={50} />
+												<Typography variant="body2" marginTop={2} align="right">
+													USDC 50,000,000/{minLaunchSize} (50%)
+												</Typography>
+											</CardContent>
+										</CardActionArea>
+										<CardActions>
+											<Button
+												size="small"
+												color="primary"
+												fullWidth
+												onClick={() => navigate("/deal/view/1")}
+											>
+												{isInitialized &&
+												Moralis.User.current()?.attributes?.isInvestor
+													? "BID"
+													: "EDIT"}
+											</Button>
+										</CardActions>
+									</Card>
+								</Grid>
+							</>
+						);
+					})}
 				</Grid>
 			</TabPanel>
 			<TabPanel value={value} index={1}>

@@ -20,7 +20,7 @@ import { useGlobalContext } from "../../context/GlobalContext";
 const Wallet: FC<RouteComponentProps> = () => {
 	const Web3Api = useMoralisWeb3Api();
 	const { chain, walletAddress } = useGlobalContext();
-	const [tab, setTab] = useState<number>(0);
+	const [tab, setTab] = useState<number>(1);
 
 	/**
 	 * @description Fetch Token Balance of User Address
@@ -104,7 +104,7 @@ const Wallet: FC<RouteComponentProps> = () => {
 							accessor: "to_address",
 						},
 					],
-					data: historicalTransactionData ?? [],
+					data: historicalTransactionData?.result ?? [],
 				};
 			default:
 				return {

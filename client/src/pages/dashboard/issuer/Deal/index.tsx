@@ -9,7 +9,7 @@ const DealIndex: FC<RouteComponentProps> = () => {
 		<Router>
 			<ViewDeal path="/view/:dealId" />
 			<CreateDeal path="/create" />
-			<UpdateDeal path="/update:dealId" />
+			<UpdateDeal path="/update/:dealId" />
 		</Router>
 	);
 };

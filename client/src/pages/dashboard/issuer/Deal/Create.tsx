@@ -42,7 +42,7 @@ const CreateDeal: FC<RouteComponentProps> = () => {
 					params: {
 						abi,
 						functionName: "createDealIssuance",
-						contractAddress: "0x3271fb4BC23661Bd8cec78D9554284C0Fa16Bb86",
+						contractAddress: "0x39232f63261FE6D227a46e79f420a94FebB1d150",
 						params: {
 							...values,
 							_interestPaymentDates: ["1637738471"],
