@@ -7,9 +7,9 @@ struct Investor {
     address addr;
     mapping(address => bool) isExisting;
 
-uint256 dealsBidCount;
-uint256[] dealsBidId;  // a list of ids of deals bidded
-string[] dealsBidISIN;  // a list of ISINs of deals bidded
+    uint256 dealsBidCount;
+    uint256[] dealsBidId;  // a list of ids of deals bidded
+    string[] dealsBidISIN;  // a list of ISINs of deals bidded
 
     uint256 totalBalance;       // in terms of stablecoin
     uint256 totalLockedInBid;   // in terms of stablecoin
