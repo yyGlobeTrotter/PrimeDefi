@@ -153,6 +153,10 @@ Copy `.env.example` and rename it `.env` and fill in the following variables
 
 ```
 ETHERSCAN_API_KEY=xxx
+POLYGONSCAN_API_KEY=xxx
+BSCSCAN_API_KEY=xxx
+FTMSCAN_API_KEY=xxx
+SNOWTRACE_API_KEY=xxx
 MORALIS_SPEEDY_NODES_KEY=xxx
 ARCHIVE=xxx
 ```

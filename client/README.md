@@ -1,6 +1,6 @@
 # PrimeDeFi Client
 
-The code within this folder contain the Frontend implementation for the PrimeDeFi dApps. This project is React based and utilize several libraries, including but not limited to Chakra UI, Moralis, and Material UI. Happy BUIDL!
+The code within this folder contain the Frontend implementation for the PrimeDeFi dApps. This project is React based and utilize several libraries, including but not limited Moralis, Material UI, and Formik. Happy BUIDL!
 
 ---
 
