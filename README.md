@@ -1,7 +1,7 @@
 # Chainlink Hackathon Fall 2021 DeFi Project -- PrimeDeFi
 ***
 
-![PrimeDeFi Logo](/client/src/temp.png "PrimeDeFi Project Logo")
+![PrimeDeFi Login](/img/login.png "PrimeDeFi dApp Login Page")
 
 ## PrimeDeFi DApp Walkthrough DEMO
 
