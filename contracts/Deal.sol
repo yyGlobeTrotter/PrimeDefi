@@ -19,6 +19,11 @@ import "./IssuerSet.sol";
 import "./InvestorSet.sol";
 import "./DealSet.sol";
 import "./Helpers.sol";
+import "./PrimeFiChainLinkClient.sol";
+
+interface IDeal {
+    function setIssuerRating(address _addr, string memory _newCreditRating) external;
+}
 
 /**
  * @title Deal
@@ -46,7 +51,7 @@ contract Deal is KeeperCompatibleInterface {
     //using DealSet for DealIssuance;
     //using InvestorSet for Investor;
 
-    event LogCreateIssuer(address indexed _issuer, string _name, string _creditRating);
+    event LogCreateIssuer(address indexed _issuer, string _name);
     event LogEditIssuerMetaData(address indexed _issuer, string _name, string _creditRating);
 
     event LogCreateDealIssuance(
@@ -127,6 +132,8 @@ contract Deal is KeeperCompatibleInterface {
     // Chainlinnk oracle smart contract deployed on Kovan by Pavel
     address public constant oracleContract = 0x0cfd0c62496a623eD06563422EA03B7b768e5D73;
 
+
+    IPrimeFiChainLinkClient chainLinkClient;
     // =========================
     /// PLACEHOLDER for Modifiers
     /*
@@ -209,15 +216,15 @@ function performUpkeep(bytes calldata performData) external override {
     /**
     * @notice Create issuer & set meta data details
     */
-    function createIssuer(string memory _name, string memory _creditRating) public {
+   function createIssuer(string memory _name) public {
         Issuer storage issuer = issuers[msg.sender];
         //require(issuer.insert(msg.sender));   // Using my Library IssuerSet here
 
         issuer.name = _name;
-        issuer.creditRating = _creditRating;
 
         issuerCount++;
-        emit LogCreateIssuer(msg.sender, _name, _creditRating);
+        emit LogCreateIssuer(msg.sender, _name);
+        chainLinkClient.requestRating(msg.sender, _name);
     }
 
     /**
@@ -254,6 +261,10 @@ function performUpkeep(bytes calldata performData) external override {
     function editInvestorDetailsPostNewIssuance(string memory _ISIN, Investor storage _investor) internal {
         _investor.isOfferClosed[_ISIN] = true;
         _investor.isBidSuccessful[_ISIN] = true;
+    }
+
+    function setChainLinkClient(address _chainLinkClientAddress) external {
+        chainLinkClient = IPrimeFiChainLinkClient(_chainLinkClientAddress);
     }
 
     /**
