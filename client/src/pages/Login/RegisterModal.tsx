@@ -1,8 +1,7 @@
-import MoralisType from "moralis";
-import { useNavigate } from "@reach/router";
+import { navigate } from "@reach/router";
 import { useFormik } from "formik";
-import { useState } from "react";
-import { useWeb3ExecuteFunction } from "react-moralis";
+import { FC, useState } from "react";
+import { useWeb3ExecuteFunction, useMoralis } from "react-moralis";
 import Button from "@mui/material/Button";
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
@@ -16,6 +15,7 @@ import MenuItem from "@mui/material/MenuItem";
 import Select from "@mui/material/Select";
 import Snackbar from "@mui/material/Snackbar";
 import TextField from "@mui/material/TextField";
+import { useSnackbar } from "notistack";
 import Deal from "../../contracts/Deal.json";
 import Alert from "../../components/alert";
 
@@ -26,15 +26,11 @@ import Alert from "../../components/alert";
 interface RegisterInfo {
 	address: string;
 	isInvestor: boolean;
-	Moralis: MoralisType;
 }
 
-const RegisterModal = ({
-	address,
-	isInvestor,
-	Moralis,
-}: RegisterInfo): JSX.Element => {
-	const navigate = useNavigate();
+const RegisterModal: FC<RegisterInfo> = ({ address, isInvestor }) => {
+	const { enqueueSnackbar } = useSnackbar();
+	const { Moralis } = useMoralis();
 	const [open, setOpen] = useState(false);
 	const [transactionStatus, setTransactionStatus] = useState({
 		transactionCompleted: false,
@@ -78,7 +74,9 @@ const RegisterModal = ({
 		},
 		onSubmit: async (values) => {
 			if (documents.length === 0) {
-				alert("You need to upload a KYC document");
+				enqueueSnackbar("You need to upload a KYC document", {
+					variant: "warning",
+				});
 				return;
 			}
 			const User = Moralis.Object.extend("_User");

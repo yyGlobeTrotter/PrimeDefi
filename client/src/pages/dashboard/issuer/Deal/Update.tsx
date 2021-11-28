@@ -9,6 +9,7 @@ import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
 import Grid from "@mui/material/Grid";
+import { useSnackbar } from "notistack";
 import Input from "../../../../components/Input";
 import BasicLayout from "../../../../layout/BasicLayout";
 import updateDealTextFields, {
@@ -21,6 +22,7 @@ interface UpdateDealInputProps {
 }
 
 const UpdateDeal: FC<RouteComponentProps> = () => {
+	const { enqueueSnackbar } = useSnackbar();
 	const [open, setOpen] = useState(false);
 
 	const handleClose = () => {
@@ -57,8 +59,11 @@ const UpdateDeal: FC<RouteComponentProps> = () => {
 					actualOfferPrice !==
 					Math.round((Number(offerPrice) + Number.EPSILON) * 100) / 100
 				) {
-					alert(
+					enqueueSnackbar(
 						`Amount Required for Escrow has to be 5% of initial offer size. (${actualOfferPrice})`,
+						{
+							variant: "warning",
+						},
 					);
 				} else {
 					fetch({

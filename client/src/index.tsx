@@ -2,6 +2,7 @@ import { StrictMode } from "react";
 import ReactDOM from "react-dom";
 import { MoralisProvider } from "react-moralis";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
+import { SnackbarProvider } from "notistack";
 import * as serviceWorker from "./serviceWorker";
 import App from "./App";
 import GlobalContextProvider from "./context/GlobalContext";
@@ -11,14 +12,16 @@ const theme = createTheme({});
 ReactDOM.render(
 	<StrictMode>
 		<ThemeProvider theme={theme}>
-			<MoralisProvider
-				appId={process.env.REACT_APP_MORALIS_APP_ID ?? ""}
-				serverUrl={process.env.REACT_APP_MORALIS_SERVER_URL ?? ""}
-			>
-				<GlobalContextProvider>
-					<App />
-				</GlobalContextProvider>
-			</MoralisProvider>
+			<SnackbarProvider maxSnack={1}>
+				<MoralisProvider
+					appId={process.env.REACT_APP_MORALIS_APP_ID ?? ""}
+					serverUrl={process.env.REACT_APP_MORALIS_SERVER_URL ?? ""}
+				>
+					<GlobalContextProvider>
+						<App />
+					</GlobalContextProvider>
+				</MoralisProvider>
+			</SnackbarProvider>
 		</ThemeProvider>
 	</StrictMode>,
 	document.getElementById("root"),

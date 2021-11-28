@@ -1,4 +1,4 @@
-import { FC, useState } from "react";
+import { FC, useState, Fragment } from "react";
 import { navigate, RouteComponentProps } from "@reach/router";
 import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
@@ -157,7 +157,7 @@ const ViewDeal: FC<ViewDealProps> = () => {
 												{DealOverview.map((overview) => {
 													const { name, value } = overview;
 													return (
-														<>
+														<Fragment key={name}>
 															<Grid item xs={6} md={3} sx={{ pb: 2 }}>
 																<Typography>{name}</Typography>
 															</Grid>
@@ -166,7 +166,7 @@ const ViewDeal: FC<ViewDealProps> = () => {
 																	{value}
 																</Typography>
 															</Grid>
-														</>
+														</Fragment>
 													);
 												})}
 											</Grid>
@@ -187,7 +187,7 @@ const ViewDeal: FC<ViewDealProps> = () => {
 												{DealHistoricalDetail.map((historicalDetail) => {
 													const { name, value } = historicalDetail;
 													return (
-														<>
+														<Fragment key={name}>
 															<Grid item xs={6} md={3} sx={{ pb: 2 }}>
 																<Typography>{name}</Typography>
 															</Grid>
@@ -196,7 +196,7 @@ const ViewDeal: FC<ViewDealProps> = () => {
 																	{value}
 																</Typography>
 															</Grid>
-														</>
+														</Fragment>
 													);
 												})}
 											</Grid>
@@ -247,7 +247,7 @@ const ViewDeal: FC<ViewDealProps> = () => {
 												{DealSummary.map((summary) => {
 													const { name, value } = summary || {};
 													return (
-														<>
+														<Fragment key={name}>
 															<Grid item xs={12} md={6}>
 																<Typography>{name}</Typography>
 															</Grid>
@@ -256,7 +256,7 @@ const ViewDeal: FC<ViewDealProps> = () => {
 																	{value}
 																</Typography>
 															</Grid>
-														</>
+														</Fragment>
 													);
 												})}
 											</Grid>

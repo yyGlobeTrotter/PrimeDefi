@@ -13,14 +13,17 @@ import TableHead from "@mui/material/TableHead";
 import TableBody from "@mui/material/TableBody";
 import TableRow from "@mui/material/TableRow";
 import TableCell from "@mui/material/TableCell";
+import Typography from "@mui/material/Typography";
 import CircularProgress from "@mui/material/CircularProgress";
+import { useSnackbar } from "notistack";
 import BasicLayout from "../../layout/BasicLayout";
 import { useGlobalContext } from "../../context/GlobalContext";
 
 const Wallet: FC<RouteComponentProps> = () => {
+	const { enqueueSnackbar } = useSnackbar();
 	const Web3Api = useMoralisWeb3Api();
 	const { chain, walletAddress } = useGlobalContext();
-	const [tab, setTab] = useState<number>(1);
+	const [tab, setTab] = useState<number>(0);
 
 	/**
 	 * @description Fetch Token Balance of User Address
@@ -28,7 +31,6 @@ const Wallet: FC<RouteComponentProps> = () => {
 	const {
 		fetch: fetchTokenBalances,
 		data: tokenBalancesData,
-		// error: tokenBalancesError,
 		isLoading: isTokenBalancesLoading,
 		isFetching: isTokenBalancesFetching,
 	} = useMoralisWeb3ApiCall(Web3Api.account.getTokenBalances, {
@@ -82,7 +84,7 @@ const Wallet: FC<RouteComponentProps> = () => {
 							accessor: "symbol",
 						},
 						{
-							Header: "Balance",
+							Header: "Balance (in Wei)",
 							accessor: "balance",
 						},
 					],
@@ -132,10 +134,32 @@ const Wallet: FC<RouteComponentProps> = () => {
 	useEffect(() => {
 		switch (tab) {
 			case 0:
-				fetchTokenBalances();
+				fetchTokenBalances({
+					onError: (e) => {
+						if (e) {
+							enqueueSnackbar(
+								"Failed to fetch token balances. Please try again later.",
+								{
+									variant: "error",
+								},
+							);
+						}
+					},
+				});
 				break;
 			case 1:
-				fetchHistoricalTransaction();
+				fetchHistoricalTransaction({
+					onError: (e) => {
+						if (e) {
+							enqueueSnackbar(
+								"Failed to fetch historical transactions. Please try again later.",
+								{
+									variant: "error",
+								},
+							);
+						}
+					},
+				});
 				break;
 			default:
 				break;
@@ -164,10 +188,24 @@ const Wallet: FC<RouteComponentProps> = () => {
 			>
 				<Grid item xs={12}>
 					{isLoading ? (
-						<CircularProgress color="primary" />
+						<Grid
+							container
+							direction="column"
+							spacing={2}
+							justifyContent="center"
+							alignItems="center"
+							sx={{ width: "82vw", minHeight: "40vh" }}
+						>
+							<Grid item>
+								<CircularProgress color="primary" />
+							</Grid>
+							<Grid item>
+								<Typography>Loading data...</Typography>
+							</Grid>
+						</Grid>
 					) : (
-						<TableContainer component={Paper}>
-							<Table {...getTableProps()}>
+						<TableContainer component={Paper} sx={{ maxHeight: "40vh" }}>
+							<Table stickyHeader {...getTableProps()}>
 								<TableHead>
 									{headerGroups.map((headerGroup) => (
 										<TableRow {...headerGroup.getHeaderGroupProps()}>

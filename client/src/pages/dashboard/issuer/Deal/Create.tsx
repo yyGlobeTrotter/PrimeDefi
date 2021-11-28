@@ -1,5 +1,4 @@
-/* eslint-disable no-underscore-dangle */
-import { ChangeEvent, FC, useMemo, useRef, useState } from "react";
+import { ChangeEvent, FC, useEffect, useMemo, useRef, useState } from "react";
 import { navigate, RouteComponentProps } from "@reach/router";
 import {
 	useWeb3ExecuteFunction,
@@ -12,6 +11,7 @@ import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
 import IconButton from "@mui/material/IconButton";
 import DeleteIcon from "@mui/icons-material/Delete";
+import { useSnackbar } from "notistack";
 import Input from "../../../../components/Input";
 import BasicLayout from "../../../../layout/BasicLayout";
 import createDealTextFields, {
@@ -32,11 +32,18 @@ const CreateDeal: FC<RouteComponentProps> = () => {
 	const fileInputRef = useRef<any>();
 	const initialFileData = { name: "", fileObject: {}, ipfs: "" };
 	const [fileData, setFileData] = useState(initialFileData);
+	const [dealCreated, setDealCreated] = useState<boolean>(false);
+	const { enqueueSnackbar } = useSnackbar();
 	const disableButton = useMemo(
 		() => isFetching || isLoading || isUploading,
 		[isFetching, isLoading, isUploading],
 	);
 
+	/**
+	 * @description Handle IPFS upload + File state changes
+	 *
+	 * @param event
+	 */
 	const handleFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
 		try {
 			const fileName = event.target.value;
@@ -88,15 +95,30 @@ const CreateDeal: FC<RouteComponentProps> = () => {
 						contractAddress: "0x7af9B4e4006478160569BF956aE2241F49C43104",
 						params: formattedValues,
 					},
-					onSuccess: () => {},
-					onComplete: () => {
-						if (!error) {
-							navigate("/dashboard");
+					onSuccess: (result) => {
+						if (result) {
+							setDealCreated(true);
+							enqueueSnackbar("Deal Created Successfully", {
+								variant: "success",
+							});
+						}
+					},
+					onError: (e) => {
+						if (e) {
+							enqueueSnackbar("Deal Creation Faile. Please try again later.", {
+								variant: "error",
+							});
 						}
 					},
 				});
 			},
 		});
+
+	useEffect(() => {
+		if (dealCreated && !error) {
+			navigate("/dashboard");
+		}
+	}, [dealCreated, error]);
 
 	return (
 		<BasicLayout title="Create Deal" spacing={3}>
@@ -130,7 +152,7 @@ const CreateDeal: FC<RouteComponentProps> = () => {
 								};
 
 								return (
-									<Grid item xs={xs} sm={sm} md={md} lg={lg} xl={xl}>
+									<Grid item key={name} xs={xs} sm={sm} md={md} lg={lg} xl={xl}>
 										<Input
 											title={title}
 											name={name}
@@ -138,6 +160,7 @@ const CreateDeal: FC<RouteComponentProps> = () => {
 											subtitle={subtitle}
 											placeholder={placeholder}
 											value={formattedValue()}
+											required
 											onChange={handleChange}
 										/>
 									</Grid>
@@ -174,6 +197,7 @@ const CreateDeal: FC<RouteComponentProps> = () => {
 											onChange={handleFileChange}
 											multiple={false}
 											ref={fileInputRef}
+											required
 											type="file"
 											hidden
 										/>

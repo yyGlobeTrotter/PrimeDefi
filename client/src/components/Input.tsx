@@ -11,6 +11,7 @@ interface CustomInputProps {
 	placeholder?: string;
 	type?: string;
 	value: string;
+	required?: boolean;
 	onChange: (e: ChangeEvent<HTMLInputElement>) => void;
 }
 
@@ -23,6 +24,7 @@ const CustomInput: FC<CustomInputProps> = (props) => {
 		placeholder = "",
 		type = "",
 		value = "",
+		required = false,
 		onChange,
 	} = props;
 
@@ -42,6 +44,7 @@ const CustomInput: FC<CustomInputProps> = (props) => {
 					size="small"
 					type={type}
 					value={value}
+					required={required}
 					onChange={onChange}
 				/>
 			</Grid>
