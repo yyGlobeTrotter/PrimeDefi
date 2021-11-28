@@ -4,7 +4,7 @@ pragma solidity 0.8.0;
 
 //import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/security/Pausable.sol";
 //import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/security/ReentrancyGuard.sol";
-//import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/access/Ownable.sol";
+import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/access/Ownable.sol";
 
 import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/math/Math.sol";
 //import "@openzeppelin/contracts/utils/math/Math.sol";
@@ -12,6 +12,7 @@ import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contr
 import "https://github.com/smartcontractkit/chainlink/blob/master/contracts/src/v0.8/interfaces/KeeperCompatibleInterface.sol";
 //import "@chainlink/contracts/src/v0.8/interfaces/KeeperCompatible.sol";
 
+import "./PrimeFiChainLinkClient.sol";
 import "./DealToken.sol";
 import "./DealTokenFactory.sol";
 import "./DealTokenManager.sol";
@@ -19,6 +20,10 @@ import "./IssuerSet.sol";
 import "./InvestorSet.sol";
 import "./DealSet.sol";
 import "./Helpers.sol";
+
+interface IDeal {
+    function setIssuerRating(address _addr, string memory _newCreditRating) external;
+}
 
 /**
  * @title Deal
@@ -38,7 +43,7 @@ import "./Helpers.sol";
  * @dev To implement decimals to our DealToken
  * @dev To implement global fee
  */
-contract Deal is KeeperCompatibleInterface {
+contract Deal is Ownable, KeeperCompatibleInterface {
     using SafeMath for uint256;
     using SafeMath for uint;
 
@@ -46,50 +51,50 @@ contract Deal is KeeperCompatibleInterface {
     //using DealSet for DealIssuance;
     //using InvestorSet for Investor;
 
-    event LogCreateIssuer(address indexed _issuer, string _name, string _creditRating);
-    event LogEditIssuerMetaData(address indexed _issuer, string _name, string _creditRating);
+    event LogCreateIssuer(address indexed issuer, string name, string creditRating);
+    event LogEditIssuerMetaData(address indexed issuer, string name, string creditRating);
 
     event LogCreateDealIssuance(
-        address indexed _issuer,
-        string indexed _ISIN,
-        string _dealName,
-        uint256 _initSize,
-        uint256 _minSize,
-        uint256 _faceValue,
-        uint256 _offerPrice,
-        uint _offerStartTime,
-        uint _offerCloseTime,
-        uint256 _term,
-        uint256 _interestRate,
-        uint[] _interestPaymentDates,
-        uint256 _upfrontFee
-        //uint256 _escrowRatio
+        address indexed issuer,
+        string indexed ISIN,
+        string dealName,
+        uint256 initSize,
+        uint256 minSize,
+        uint256 faceValue,
+        uint256 offerPrice,
+        uint offerStartTime,
+        uint offerCloseTime,
+        uint256 term,
+        uint256 interestRate,
+        uint[] interestPaymentDates,
+        uint256 upfrontFee
+        //uint256 escrowRatio
     );
 
     event LogEditDealIssuance(
-        address indexed _issuer,
-        string indexed _ISIN,
-        string _newDealName,
-        uint256 _newInitSize,
-        uint256 _newMinSize,
-        uint256 _newOfferPrice,
-        uint _newOfferCloseTime,
-        uint256 _newTerm,
-        uint256 _newInterestRate,
-        uint[] _newInterestPaymentDates,
-        uint256 _newUpfrontFee,
-        uint256 _newEscrowRatio
+        address indexed issuer,
+        string indexed ISIN,
+        string newDealName,
+        uint256 newInitSize,
+        uint256 newMinSize,
+        uint256 newOfferPrice,
+        uint newOfferCloseTime,
+        uint256 newTerm,
+        uint256 newInterestRate,
+        uint[] newInterestPaymentDates,
+        uint256 newUpfrontFee,
+        uint256 newEscrowRatio
     );
 
-    event LogEditTokenMetaData(address indexed _issuer, string indexed _ISIN, string _newName);
-    event LogCreateToken(address indexed _issuer, string indexed _ISIN, string _name, string _symbol, uint256 _totalSupply);
+    event LogEditTokenMetaData(address indexed issuer, string indexed ISIN, string newName);
+    event LogCreateToken(address indexed issuer, string indexed ISIN, string name, string symbol, uint256 totalSupply);
 
-    event LogCancelDeal(address indexed _issuer, string indexed _ISIN);
-    event LogIssueNewDeal(address indexed _issuer,  string indexed _ISIN, address _token, uint256 _finalSize, address[] _investors );
+    event LogCancelDeal(address indexed issuer, string indexed ISIN);
+    event LogIssueNewDeal(address indexed issuer,  string indexed ISIN, address token, uint256 finalSize, address[] investors );
 
-    event LogTransferDealToken(string indexed _ISIN, address _token, address _investorAddr, uint256 _tokenAmount);
+    event LogTransferDealToken(string indexed ISIN, address token, address investorAddr, uint256 tokenAmount);
 
-    address private owner;          // dapp owner address
+    //address private contractOwner;          // dapp owner address
     uint256 private balance;        // balance of the Deal contract wallet
     uint256 private globalFee;              // this is the fee our dapp charges; Assume a flat 5% of total issue size for now
     uint256 private feeRateDecimal;         // use 3 for now
@@ -122,37 +127,23 @@ contract Deal is KeeperCompatibleInterface {
     // USD Coin tracker address on Kovan test net
     address public constant USDC = 0xe22da380ee6B445bb8273C81944ADEB6E8450422;
 
-    // Chainlink operator contract deployed on Kovan by Pavel
-    address public constant chainlinkOperator = 0x756bC2fb4c9e8794aD4EC1dfb32B52e3AfB3Cd3e;
-    // Chainlinnk oracle smart contract deployed on Kovan by Pavel
-    address public constant oracleContract = 0x0cfd0c62496a623eD06563422EA03B7b768e5D73;
+    IPrimeFiChainLinkClient chainLinkClient;
 
     // =========================
-    /// PLACEHOLDER for Modifiers
-    /*
-    modifier isOfferLive(bytes32 memory _ISIN) {
-        require(deals[_ISIN].isOfferLive, "Issuance offer period is NOT live");
-        _;
-    }
-
-    modifier isOfferClosed(bytes32 memory _ISIN) {
-        require(deals[_ISIN].isOfferClosed, "Issuance offer period is NOT closed yet");
-        _;
-    }
-
+    // PLACEHOLDER for Modifiers
     modifier inState(DealIssuance storage _deal, State _state) {
         require(
             _deal.state == _state,
             "Invalid state."
         );
         _;
-    } */
+    }
 
     /**
      * @notice Constructor
      */
     constructor() {
-        owner = msg.sender;
+        //contractOwner = msg.sender;
         globalFee = 5000;   // this represents 5% when feeRateDecimal = 3 (for now)
         feeRateDecimal = 3;
         percentageDecimal = 2;
@@ -160,76 +151,100 @@ contract Deal is KeeperCompatibleInterface {
         manager = new DealTokenManager();
         helper = new Helpers();
     }
-/*
+
     receive() payable external {
         balance += msg.value;
     }
-*/
 
-function checkUpkeep(bytes calldata /* checkData */) external view override returns (bool, bytes memory) {
-    string[] memory toBeClosed = new string[](dealCount);
-    uint256 count;
-    string memory dealISIN;
-    DealIssuance storage deal;
-    bool upkeepNeeded;
-
-    for (uint256 i = 0; i < dealCount; i++) {
-        dealISIN = dealISINList[i];
-        deal = deals[dealISIN];
-        if (block.timestamp >= deal.offerCloseTime) {
-            upkeepNeeded = true;
-            toBeClosed[count] = dealISIN;
-            count++;
-        }
-    }
-    //uint closeTime = deals[dealISINList[0]].offerCloseTime;
-    //string memory toBeClosed;
-    //if (block.timestamp >= closeTime) { upkeepNeeded = true; toBeClosed = dealISINList[0]; }
-
-    return (upkeepNeeded, abi.encode(toBeClosed));
-}
-
-function performUpkeep(bytes calldata performData) external override {
-    string[] memory toBeClosed = abi.decode(performData, (string[]));
-    //string memory toBeClosed = abi.decode(performData, (string));
-    //closeDealOffering(toBeClosed);
-    for (uint256 i = 0; i < toBeClosed.length; i++) {
-        closeDealOffering(toBeClosed[i]);
-    }
-}
-
-    /**
-     * @dev Contract Destructor - Mortal design pattern to destroy contract and remove from blockchain
-     *
+    //
+    //@dev Contract Destructor - Mortal design pattern to destroy contract and remove from blockchain
+    /*
     function kill() public onlyOwner {
         selfdestruct(address(uint160(owner()))); /// cast owner to address payable
+    } */
+
+    /**
+     * @notice First one out of the two Chainlink Keepers functions - condition check
+     * @dev This can become very expensive if too much data needs to be passed
+     */
+    function checkUpkeep(bytes calldata /* checkData */) external view override returns (bool, bytes memory) {
+        string[] memory toBeClosed = new string[](dealCount);
+        uint256 count;
+        string memory dealISIN;
+        DealIssuance storage deal;
+        bool upkeepNeeded;
+
+        for (uint256 i = 0; i < dealCount; i++) {
+            dealISIN = dealISINList[i];
+            deal = deals[dealISIN];
+            if (block.timestamp >= deal.offerCloseTime) {
+                upkeepNeeded = true;
+                toBeClosed[count] = dealISIN;
+                count++;
+            }
+        }
+        //uint closeTime = deals[dealISINList[0]].offerCloseTime;
+        //string memory toBeClosed;
+        //if (block.timestamp >= closeTime) { upkeepNeeded = true; toBeClosed = dealISINList[0]; }
+
+        return (upkeepNeeded, abi.encode(toBeClosed));
     }
-    */
+
+    /**
+     * @notice Second one out of the two Chainlink Keepers functions - actual work if keeper conditiona is met
+     * @dev This can become very expensive if too much data needs to be passed
+     */
+    function performUpkeep(bytes calldata performData) external override {
+        string[] memory toBeClosed = abi.decode(performData, (string[]));
+        //string memory toBeClosed = abi.decode(performData, (string));
+        //closeDealOffering(toBeClosed);
+        for (uint256 i = 0; i < toBeClosed.length; i++) {
+            closeDealOffering(toBeClosed[i]);
+        }
+    }
+
+    /**
+     * @notice Chainlink oracle client related function
+     */
+    function setChainLinkClient(address _chainLinkClientAddress) external {
+        chainLinkClient = IPrimeFiChainLinkClient(_chainLinkClientAddress);
+    }
 
     /**
     * @notice Create issuer & set meta data details
+    * @dev Being investigated - calling chainlink oracle to get credit rating turns out to be very expensive
     */
-    function createIssuer(string memory _name, string memory _creditRating) public {
+    //   function createIssuer(string memory _name, string memory _creditRating) public {
+    function createIssuer(string memory _name) public {
         Issuer storage issuer = issuers[msg.sender];
         //require(issuer.insert(msg.sender));   // Using my Library IssuerSet here
-
         issuer.name = _name;
-        issuer.creditRating = _creditRating;
-
+        //issuer.creditRating = _creditRating;
+        chainLinkClient.requestRating(msg.sender, _name);
         issuerCount++;
-        emit LogCreateIssuer(msg.sender, _name, _creditRating);
+        emit LogCreateIssuer(msg.sender, _name, issuer.creditRating);
     }
 
     /**
     * @notice Edit issuer meta data
+    * @dev credit rating will be retrived from chainlink oracle so removed from here
     */
-    /*function editIssuerMetaData(address _addr, string memory _newName, string memory _newCreditRating) public {
+    //function editIssuerMetaData(address _addr, string memory _newName, string memory _newCreditRating) public {
+    function editIssuerMetaData(address _addr, string memory _newName) public {
         require(msg.sender == _addr, "DEAL:: editIssuerDetails: Caller is NOT the issuer");
         issuers[_addr].name = _newName;
-        issuers[_addr].creditRating = _newCreditRating;
+        //issuers[_addr].creditRating = _newCreditRating;
 
-        emit LogEditIssuerMetaData(_addr, _newName, _newCreditRating);
-    }*/
+        //emit LogEditIssuerMetaData(_addr, _newName, _newCreditRating);
+        emit LogEditIssuerMetaData(_addr, _newName, issuers[_addr].creditRating);
+    }
+
+    /**
+     * @notice Chainlink oracle client related function - get credit rating via oracle
+     */
+    function setIssuerRating(address _addr, string memory _newCreditRating) public {
+        issuers[_addr].creditRating = _newCreditRating;
+    }
 
     /**
     * @notice Edit issuer details after new deal offer is closed and set to launch
@@ -358,7 +373,6 @@ function performUpkeep(bytes calldata performData) external override {
     * @notice Update details of a deal issuance after it's created & before the offer period is closed
     * @dev For now we do NOT allow issuers to change ISIN and faceValue (to avoid stack too deep)
     */
-    /*
     function editDealIssuance(
         string memory _ISIN,
         string memory _newDealName,
@@ -402,7 +416,7 @@ function performUpkeep(bytes calldata performData) external override {
             _newUpfrontFee,
             _newEscrowRatio
         );
-    } */
+    }
 
     /**
     * @notice Create token meta data (name & symbol) for a new issuance
@@ -431,7 +445,6 @@ function performUpkeep(bytes calldata performData) external override {
     /**
     * @notice Edit token meta data for the corresponding issuance
     */
-    /*
     function editTokenMetaData(string memory _ISIN, string memory _newName) public {
         require(msg.sender == deals[_ISIN].issuer, "DEAL:: editTokenDetails: Caller is NOT the issuer");
         require(!deals[_ISIN].isOfferClosed, "DEAL:: editTokenMetaData: Offer period is already closed ");
@@ -439,7 +452,7 @@ function performUpkeep(bytes calldata performData) external override {
         deals[_ISIN].token.name = _newName;
         deals[_ISIN].token.symbol = _ISIN;
         emit LogEditTokenMetaData( msg.sender, _ISIN, _newName );
-    } */
+    }
 
     // ====================================================
     /**
@@ -465,8 +478,6 @@ function performUpkeep(bytes calldata performData) external override {
         DealIssuance storage deal = deals[_ISIN];
         //require(deal.insert(_ISIN));   // Using my Library DealSet here to ensure unique ISIN is used for new deal
         dealISINList.push() = _ISIN;
-        // test keepers function by setting this to be 60 seconds after offer start time
-        //uint closeTime = block.timestamp + 300 seconds;
         deal.issuer = msg.sender;
         deal.ISIN = _ISIN;
         deal.dealName = _dealName;
@@ -617,7 +628,6 @@ function performUpkeep(bytes calldata performData) external override {
 
     /**
     * @notice Mint a new token for the new issuance
-    * @dev TODOItem - might need to change to private function later
     */
     function mintToken(string memory _ISIN, address _issuerAddr) internal {
         require(msg.sender == _issuerAddr, "DEAL:: mintToken: Caller is NOT the issuer");
@@ -641,7 +651,6 @@ function performUpkeep(bytes calldata performData) external override {
 
     /**
     * @notice Investor deposit stablecoin fund (USDC) into the dapp
-    * @dev Implement USDC transfer here after getting some test USDCs
     */
     //function investorMakeDeposit(IERC20 _stableCoin, uint256 _amount) public {
     function investorMakeDeposit(uint256 _amount) public {
@@ -671,9 +680,9 @@ function performUpkeep(bytes calldata performData) external override {
 
         deal.totalInvestorBid = helper.safeAdd(deal.totalInvestorBid, _bidAmount);
 
-//investor.dealsBidId[investor.dealsBidCount] = ISINtoId[_ISIN];
-//investor.dealsBidISIN[investor.dealsBidCount] = _ISIN;
-//investor.dealsBidCount++;
+        //investor.dealsBidId[investor.dealsBidCount] = ISINtoId[_ISIN];
+        //investor.dealsBidISIN[investor.dealsBidCount] = _ISIN;
+        //investor.dealsBidCount++;
 
         investor.totalLockedInBid = helper.safeAdd(investor.totalLockedInBid, _bidAmount);
         investor.availBalance = helper.safeSub(investor.totalBalance, investor.totalLockedInBid);
@@ -688,7 +697,6 @@ function performUpkeep(bytes calldata performData) external override {
     /**
     * @notice Investor gets details of a bid made earlier
     */
-    /*
     function getBidDetails(string memory _ISIN, address _addr) public view returns(
         bool isClosed,
         bool isSuccessful,
@@ -701,13 +709,12 @@ function performUpkeep(bytes calldata performData) external override {
             investor.isBidSuccessful[_ISIN],
             investor.lockedInBid[_ISIN]
         );
-    } */
+    }
 
     /**
     * @notice Investor edits an already-placed bid
     * @dev this is only allowed before deal offer period is closed
     */
-    /*
     function investorEditBid(string memory _ISIN, uint256 _newBidAmount) public {
         DealIssuance storage deal = deals[_ISIN];
         Investor storage investor = investors[msg.sender];
@@ -726,11 +733,12 @@ function performUpkeep(bytes calldata performData) external override {
 
         investor.lockedInBid[_ISIN] = _newBidAmount;
         //*** emit helper.LogInvestorEditBid(); ***
-    } */
+    }
 
     /**
     * @notice Investor cancels a bid s/he made earlier
     * @dev this is only allowed when the deal's offer period is live & when there's an existing bid made by the investor
+    * @dev need to fix library link error before using this function again
     */
 /*
     function investorCancelBid(string memory _ISIN) public {
@@ -772,7 +780,7 @@ function performUpkeep(bytes calldata performData) external override {
     }
 
     /***
-    function issuerWithdraw(address payable _issuerExternalAddr, string memory _ISIN, uint256 _amount) public {
+    function issuerWithdraw(address _issuerExternalAddr, string memory _ISIN, uint256 _amount) public {
         require(msg.sender == deals[_ISIN].issuer, "DEAL:: issuerWithdrawFund: Caller is NOT the issuer");
         require(_amount <= issuers[msg.sender][_ISIN].availableBalance, "DEAL:: issuerWithdrawFund: Not enough available fund");
 
