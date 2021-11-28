@@ -1,5 +1,6 @@
 import { FC, createContext, useState, useEffect, useContext } from "react";
 import { useMoralis } from "react-moralis";
+import eip55 from "eip55";
 import { CHAIN } from "../global.types";
 
 export const GlobalContext = createContext<{
@@ -26,20 +27,20 @@ const GlobalContextProvider: FC = (props) => {
 		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 		// @ts-ignore
 		Moralis.onAccountsChanged((address) => {
-			setWalletAddress(address[0]);
+			setWalletAddress(eip55.encode(address[0]));
 		});
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
 	// eslint-disable-next-line react-hooks/exhaustive-deps
 	useEffect(() => setChain(web3?.givenProvider?.chainId));
-	useEffect(
-		() =>
-			setWalletAddress(
-				web3?.givenProvider?.selectedAddress || user?.get("ethAddress"),
-			),
-		[web3, user],
-	);
+	useEffect(() => {
+		const userAddress =
+			web3?.givenProvider?.selectedAddress || user?.get("ethAddress");
+		if (userAddress) {
+			setWalletAddress(eip55.encode(userAddress));
+		}
+	}, [web3, user]);
 
 	return (
 		<GlobalContext.Provider value={{ chain, walletAddress }}>

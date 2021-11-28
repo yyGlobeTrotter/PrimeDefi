@@ -44,7 +44,7 @@ const BasicLayout: FC<BasicLayoutProps> = (props) => {
 						cardsArray.map((card) => {
 							const { title: cardTitle, subtitle } = card;
 							return (
-								<Grid item xs={12} md={4}>
+								<Grid item xs={12} md={4} key={cardTitle}>
 									<InfoCard title={cardTitle} subtitle={subtitle} />
 								</Grid>
 							);
