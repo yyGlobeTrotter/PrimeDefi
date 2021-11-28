@@ -5,8 +5,8 @@
 
 ## PrimeDeFi DApp Walkthrough DEMO
 
-A screen recording demo walking-through of this DApp can be found here:
-[PrimeDeFi DApp v0.1] (https://youtu.be/[XXXXXXX])
+A video walking-through of this DApp can be found here:
+[PrimeDeFi DApp MVP1.0] (https://youtu.be/8EzMlSz-iHI)
 
 ## Project Description
 
