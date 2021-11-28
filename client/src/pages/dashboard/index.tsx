@@ -24,7 +24,7 @@ const Index: FC<RouteComponentProps> = () => {
 
 	useEffect(() => {
 		if (isAuthenticated) {
-			if (pathname === "/") {
+			if (pathname === "/" || pathname === "/login") {
 				navigate("/dashboard");
 			}
 		} else {
