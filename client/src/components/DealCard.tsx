@@ -16,10 +16,11 @@ import Deal from "../contracts/Deal.json";
 
 export interface DealCardProps {
 	deal?: string;
+	index: number;
 }
 
-const DealCard: FC<DealCardProps> = () => {
-	// const { deal } = props;
+const DealCard: FC<DealCardProps> = (props) => {
+	const { index } = props;
 	const { Moralis, isInitialized } = useMoralis();
 	const { abi } = Deal;
 
@@ -100,10 +101,7 @@ const DealCard: FC<DealCardProps> = () => {
 					) : (
 						<>
 							<Typography gutterBottom variant="h5" component="div">
-								{
-									// @ts-ignore
-									deal?.dealName
-								}
+								NVIDIA-{index} CORP.DL- NOTES 2021 (20/40)
 							</Typography>
 							<Divider />
 							<Grid container spacing={2} marginY={1} marginBottom={2}>

@@ -21,7 +21,6 @@ import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import RegisterModal from "./RegisterModal";
 import Alert from "../../components/alert";
-import LoginImage from "../../assets/login.jpeg";
 
 interface Values {
 	isInvestor: boolean;
@@ -58,16 +57,22 @@ const Login: FC<RouteComponentProps> = () => {
 			<CssBaseline />
 			<Grid container sx={{ minHeight: "100vh" }}>
 				{isLargeScreen && (
-					<Grid
-						item
-						lg={8}
-						md={7}
-						sx={{
-							backgroundImage: `url("${LoginImage}")`,
-							backgroundSize: "cover",
-							backgroundPosition: "center center",
-						}}
-					/>
+					<Grid item lg={8} md={7}>
+						<Grid
+							container
+							alignItems="center"
+							justifyContent="center"
+							sx={{ height: "100vh" }}
+						>
+							<Grid item>
+								<img
+									src="login.png"
+									alt="Illustration"
+									style={{ width: "auto", height: "60vh" }}
+								/>
+							</Grid>
+						</Grid>
+					</Grid>
 				)}
 				<Grid item xs={12} md={5} lg={4}>
 					<Grid

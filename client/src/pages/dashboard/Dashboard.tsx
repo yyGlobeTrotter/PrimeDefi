@@ -186,10 +186,10 @@ const Dashboard: FC<RouteComponentProps> = () => {
 						rowSpacing={{ xs: 1, sm: 2, md: 3 }}
 						columnSpacing={{ xs: 1, sm: 2, md: 3 }}
 					>
-						{deals.map((deal: string) => {
+						{deals.map((deal: string, index: number) => {
 							return (
 								<Grid item key={deal} xs={12} sm={6} md={6} lg={4}>
-									<DealCard deal={deal} />
+									<DealCard deal={deal} index={index + 1} />
 								</Grid>
 							);
 						})}
