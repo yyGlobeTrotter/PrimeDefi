@@ -34,8 +34,7 @@ interface IDeal {
  * @dev To link the 3 customized libraries
  * @dev To break this into a few separate pieces to reduce file size
  * @dev To implement Pausible & ReentrancyGuard functions for added security measure
- * @dev To finalize all events and Modifiers
- * @dev To implement more getter functions with different criteria
+ * @dev To implement more getter functions with more search criteria
  * @dev To upgrade from ERC20 to SafeERC20 later
  */
 contract Deal is Owner, KeeperCompatibleInterface {
@@ -86,7 +85,7 @@ contract Deal is Owner, KeeperCompatibleInterface {
 
     event LogCancelDeal(address indexed issuer, string indexed ISIN);
     event LogIssueNewDeal(address indexed issuer,  string indexed ISIN, address token, uint256 finalSize, address[] investors );
-
+    
     event LogTransferStableCoin(address indexed investor, uint256 amount);
     event LogTransferDealToken(string indexed ISIN, address token, address investorAddr, uint256 tokenAmount);
 
@@ -102,7 +101,8 @@ contract Deal is Owner, KeeperCompatibleInterface {
     uint256 private balance;        // balance of the Deal contract wallet
     uint256 private globalFee;              // this is the fee our dapp charges; Assume a flat 5% of total issue size for now
     uint256 private feeRateDecimal;         // use 3 for now
-    uint256 private percentageDecimal;     // this is used in percentage calculations
+    uint256 private percentageDecimal;      // this is used in percentage calculations
+    uint256 private stablecoinDecimal;      // designated decimal for our stablecoin of choice
 
     uint256 public dealCount;       // total number of deals created in the dapp
     mapping( string => DealIssuance ) deals;    // map out ISIN to DealIssuance struct object
@@ -138,16 +138,14 @@ contract Deal is Owner, KeeperCompatibleInterface {
 
     IPrimeFiChainLinkClient chainLinkClient;
 
-    // =========================
-    /// PLACEHOLDER for Modifiers
-    /*
+    // PLACEHOLDER for Modifiers
     modifier inState(DealIssuance storage _deal, State _state) {
         require(
             _deal.state == _state,
             "Invalid state."
         );
         _;
-    } */
+    }
 
     /**
      * @notice Constructor
@@ -157,25 +155,27 @@ contract Deal is Owner, KeeperCompatibleInterface {
         globalFee = 5000;   // this represents 5% when feeRateDecimal = 3 (for now)
         feeRateDecimal = 3;
         percentageDecimal = 2;
+        stablecoinDecimal = 6;
         factory = new DealTokenFactory();
         manager = new DealTokenManager();
         helper = new Helpers();
     }
-/*
+    /*
     receive() payable external {
         balance += msg.value;
     }
-*/
+    */
+    
     /**
      * @notice Contract Destructor - Mortal design pattern to destroy contract and remove from blockchain
-     *
-    function kill() public onlyOwner {
+     */
+    /*function kill() public onlyOwner {
         selfdestruct(address(uint160(owner()))); /// cast owner to address payable
     }
-*/
+    */
 
     /**
-     * @notice Chainlink keepers checkUpkeep function
+     * @notice Implemented Chainlink keepers checkUpkeep function
      */
     function checkUpkeep(bytes calldata /* checkData */) external view override returns (bool, bytes memory) {
         string[] memory toBeClosed = new string[](dealCount);
@@ -200,7 +200,7 @@ contract Deal is Owner, KeeperCompatibleInterface {
     }
 
     /**
-     * @notice Chainlink keepers performUpkeep function
+     * @notice Implemented Chainlink keepers performUpkeep function
      */
     function performUpkeep(bytes calldata performData) external override {
         string[] memory toBeClosed = abi.decode(performData, (string[]));
@@ -413,7 +413,7 @@ contract Deal is Owner, KeeperCompatibleInterface {
             _newUpfrontFee,
             _newEscrowRatio
         );
-    } */
+    }
 
     /**
     * @notice Create token meta data (name & symbol) for a new issuance
@@ -435,7 +435,7 @@ contract Deal is Owner, KeeperCompatibleInterface {
         string memory tokenName,
         string memory symbol,
         uint256 totalSupply
-        ) {
+    ) {
         return( deals[_ISIN].token.name, deals[_ISIN].token.symbol, deals[_ISIN].token.totalSupply );
     }
 
@@ -475,7 +475,7 @@ contract Deal is Owner, KeeperCompatibleInterface {
         DealIssuance storage deal = deals[_ISIN];
         //require(deal.insert(_ISIN));   // Using my Library DealSet here to ensure unique ISIN is used for new deal
         dealISINList.push() = _ISIN;
-        // test keepers function by setting this to be 60 seconds after offer start time
+        // test keepers function by setting this to be 300 seconds after offer start time
         //uint closeTime = block.timestamp + 300 seconds;
         deal.issuer = msg.sender;
         deal.ISIN = _ISIN;
@@ -600,7 +600,7 @@ contract Deal is Owner, KeeperCompatibleInterface {
     function transferStableCoin(address _investorAddr, uint256 _allocation) internal {
         // transfer investor fund to dapp wallet, and assuming
         //   the owner of stablecoin tracker account has approved & given alllowance to investor wallet
-        ERC20(USDC).transferFrom(_investorAddr, address(this), _allocation);
+        ERC20(USDC).transferFrom(_investorAddr, address(this), _allocation );
         emit LogTransferStableCoin(_investorAddr, _allocation);
     }
 
@@ -653,15 +653,16 @@ contract Deal is Owner, KeeperCompatibleInterface {
     function investorMakeDeposit(uint256 _amount) public {
         ERC20(USDC).transfer(address(this), _amount);
         Investor storage investor = investors[msg.sender];
+        uint256 amount = helper.safeDiv(_amount, 10 ** stablecoinDecimal);
 
-        investor.totalBalance = helper.safeAdd( investor.totalBalance, _amount );
-        investor.availBalance = helper.safeAdd( investor.availBalance, _amount );
+        investor.totalBalance = helper.safeAdd( investor.totalBalance,  amount );
+        investor.availBalance = helper.safeAdd( investor.availBalance, amount );
 
         // Call library InvestorSet to see if investor already exists
         if(investor.insert(msg.sender)) {
             totalInvestorCount++;
         }
-        emit LogInvestorMakeDeposit(msg.sender, _amount);
+        emit LogInvestorMakeDeposit(msg.sender, amount);
     }
 
     /**
@@ -716,7 +717,7 @@ contract Deal is Owner, KeeperCompatibleInterface {
     function investorEditBid(string memory _ISIN, uint256 _newBidAmount) public {
         DealIssuance storage deal = deals[_ISIN];
         Investor storage investor = investors[msg.sender];
-
+    
         //require(msg.sender == deal.investors[], "DEAL:: investorEditBid: Not an investor for this deal");    // need to verify if msg.sender is an investor for this deal
         require(deal.isOfferLive, "DEAL:: investorEditBid: You cannot change a bid if the offer is NOT live");
         require(deal.investorAlreadyBid[msg.sender], "DEAL:: investorEditBid: you haven't made a bid yet");
@@ -771,11 +772,7 @@ contract Deal is Owner, KeeperCompatibleInterface {
         emit LogInvestorCancelBid(msg.sender, _ISIN, bid);
     }
 
-
-    function investorWithdraw(address _addr, uint256 _amount) public {
-    }
-
-    /***
+    /** To Be Completed
     function issuerWithdraw(address payable _issuerExternalAddr, string memory _ISIN, uint256 _amount) public {
         require(msg.sender == deals[_ISIN].issuer, "DEAL:: issuerWithdrawFund: Caller is NOT the issuer");
         require(_amount <= issuers[msg.sender][_ISIN].availableBalance, "DEAL:: issuerWithdrawFund: Not enough available fund");
@@ -784,10 +781,11 @@ contract Deal is Owner, KeeperCompatibleInterface {
         _issuerExternalAddr.transfer(_amount);
     } */
 
-/**
+    /** To Be Implemented
+    function investorWithdraw(address _addr, uint256 _amount) public {}
     function issuerTopUpEscrow(string memory _ISIN) public {}
     function payInterimCoupon()
     function redeemAtMaturity()
     function handleDefaultEvent()
-*/
+    */
 }
