@@ -11,6 +11,7 @@ import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
 import IconButton from "@mui/material/IconButton";
 import DeleteIcon from "@mui/icons-material/Delete";
+import Snackbar from "@mui/material/Snackbar";
 import { useSnackbar } from "notistack";
 import Input from "../../../../components/Input";
 import BasicLayout from "../../../../layout/BasicLayout";
@@ -18,6 +19,7 @@ import createDealTextFields, {
 	CreateDealTextFieldsType,
 } from "../../../../list/createDeal";
 import Deal from "../../../../contracts/Deal.json";
+import Alert from "../../../../components/alert";
 
 interface CreateDealInputProps {
 	[key: string]: string;
@@ -38,6 +40,11 @@ const CreateDeal: FC<RouteComponentProps> = () => {
 		() => isFetching || isLoading || isUploading,
 		[isFetching, isLoading, isUploading],
 	);
+	const [transactionStatus, setTransactionStatus] = useState({
+		transactionCompleted: false,
+		isSuccess: false,
+		message: "",
+	});
 
 	/**
 	 * @description Handle IPFS upload + File state changes
@@ -55,6 +62,12 @@ const CreateDeal: FC<RouteComponentProps> = () => {
 						name: fileName,
 						fileObject,
 						ipfs: result?._url,
+					});
+					setTransactionStatus({
+						transactionCompleted: true,
+						isSuccess: true,
+						message:
+							`Upload image success! Check it in here: ${result?._url}`,
 					});
 				},
 			});
@@ -105,7 +118,7 @@ const CreateDeal: FC<RouteComponentProps> = () => {
 					},
 					onError: (e) => {
 						if (e) {
-							enqueueSnackbar("Deal Creation Faile. Please try again later.", {
+							enqueueSnackbar("Deal Creation Failed. Please try again later.", {
 								variant: "error",
 							});
 						}
@@ -227,6 +240,30 @@ const CreateDeal: FC<RouteComponentProps> = () => {
 					</Grid>
 				</Grid>
 			</form>
+			<Snackbar
+				open={transactionStatus.transactionCompleted}
+				autoHideDuration={6000}
+				onClose={() =>
+					setTransactionStatus({
+						transactionCompleted: false,
+						isSuccess: true,
+						message: "",
+					})
+				}
+			>
+				<Alert
+					onClose={() =>
+						setTransactionStatus({
+							transactionCompleted: false,
+							isSuccess: true,
+							message: "",
+						})
+					}
+					severity={transactionStatus.isSuccess ? "success" : "error"}
+				>
+					{transactionStatus.message}
+				</Alert>
+			</Snackbar>
 		</BasicLayout>
 	);
 };

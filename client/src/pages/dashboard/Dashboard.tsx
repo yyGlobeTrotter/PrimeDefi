@@ -77,10 +77,10 @@ const Dashboard: FC<RouteComponentProps> = () => {
 	const [value, setValue] = useState(0);
 	const [deals, setDeals] = useState<string[]>([]);
 	const { abi } = Deal;
-	const { isInitialized, isWeb3Enabled } = useMoralis();
+	const { Moralis, isInitialized, isWeb3Enabled } = useMoralis();
 	const { chain, walletAddress } = useGlobalContext();
 	const Web3Api = useMoralisWeb3Api();
-
+	
 	/**
 	 * @description Fetch `LogCreateDealIssuance` event logs
 	 */
@@ -162,8 +162,8 @@ const Dashboard: FC<RouteComponentProps> = () => {
 		<>
 			<BasicLayout
 				title="Dashboard"
-				buttonText="Create Deal"
-				buttonOnClick={() => navigate("/deal/create")}
+				buttonText={!Moralis.User.current()?.attributes?.isInvestor ? "Create Deal" : undefined}
+				buttonOnClick={!Moralis.User.current()?.attributes?.isInvestor ? () => navigate("/deal/create") : undefined}
 				cardsArray={[
 					{ title: "Total Value Raised", subtitle: "$ 350.2 M" },
 					{ title: "Credit Rating", subtitle: "AA (Moody)" },
