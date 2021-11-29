@@ -63,7 +63,7 @@ Investor dashboard is the first page that investors will see after they log into
 
 ### Solidity Contracts
 
-![PrimeDeFi Contracts Relationship](/img/infra.jpg "PrimeDeFi dApp smart contract relationship illustration")
+![PrimeDeFi Contracts Relationship](/img/contracts_rel.jpg "PrimeDeFi dApp smart contract relationship illustration")
 
 
 ## How to Run this DApp
