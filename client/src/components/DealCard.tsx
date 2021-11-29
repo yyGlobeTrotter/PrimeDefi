@@ -182,7 +182,11 @@ const DealCard: FC<DealCardProps> = (props) => {
 					variant="contained"
 					sx={{ mb: 2 }}
 					disabled={isLodingAndFetchingData}
-					onClick={() => Moralis.User.current()?.attributes?.isInvestor ? navigate("/bidding") : navigate("/deal/view/1")}
+					onClick={() =>
+						Moralis.User.current()?.attributes?.isInvestor
+							? navigate("/bidding")
+							: navigate("/deal/view/1")
+					}
 				>
 					{isInitialized && Moralis.User.current()?.attributes?.isInvestor
 						? "BID"

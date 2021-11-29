@@ -228,68 +228,70 @@ const Bidding: FC<RouteComponentProps> = () => {
 								</CardContent>
 							</Card>
 						</Grid>
-						{ Number(amountBid) > 0 ? (
+						{Number(amountBid) > 0 ? (
 							<>
-							<Grid item>
-							<Typography variant="h5">Bidding Records</Typography>
-							<TableContainer component={Paper}>
-								<Table sx={{ minWidth: 650 }} aria-label="simple table">
-									<TableHead>
-										<TableRow>
-											<TableCell>Bidding Date and Time</TableCell>
-											<TableCell align="right">Amount</TableCell>
-										</TableRow>
-									</TableHead>
-									<TableBody>
-										<TableRow
-											key={1}
-											sx={{
-												"&:last-child td, &:last-child th": { border: 0 },
-											}}
-										>
-											<TableCell component="th" scope="row">
-												{`${new Date(
-													1632142439 * 1000,
-												).toDateString()} - ${new Date(
-													1632142439 * 1000,
-												).toLocaleTimeString()}`}
-											</TableCell>
-											<TableCell align="right">{amountBid}</TableCell>
-										</TableRow>
-									</TableBody>
-								</Table>
-							</TableContainer>
-						</Grid>
-						<Grid item>
-							<TableContainer component={Paper}>
-								<Typography variant="h5">Interest Payment Dates</Typography>
-								<Table sx={{ minWidth: 650 }} aria-label="simple table">
-									<TableHead>
-										<TableRow>
-											<TableCell>Date and Time</TableCell>
-											<TableCell align="right">Amount per unit</TableCell>
-										</TableRow>
-									</TableHead>
-									<TableBody>
-										<TableRow
-											key={1}
-											sx={{
-												"&:last-child td, &:last-child th": { border: 0 },
-											}}
-										>
-											<TableCell component="th" scope="row">
-												{`${new Date(Date.now()).toDateString()} - ${new Date(
-													Date.now(),
-												).toLocaleTimeString()}`}
-											</TableCell>
-											<TableCell align="right">200</TableCell>
-										</TableRow>
-									</TableBody>
-								</Table>
-							</TableContainer>
-						</Grid>
+								<Grid item>
+									<Typography variant="h5">Bidding Records</Typography>
+									<TableContainer component={Paper}>
+										<Table sx={{ minWidth: 650 }} aria-label="simple table">
+											<TableHead>
+												<TableRow>
+													<TableCell>Bidding Date and Time</TableCell>
+													<TableCell align="right">Amount</TableCell>
+												</TableRow>
+											</TableHead>
+											<TableBody>
+												<TableRow
+													key={1}
+													sx={{
+														"&:last-child td, &:last-child th": { border: 0 },
+													}}
+												>
+													<TableCell component="th" scope="row">
+														{`${new Date(
+															1632142439 * 1000,
+														).toDateString()} - ${new Date(
+															1632142439 * 1000,
+														).toLocaleTimeString()}`}
+													</TableCell>
+													<TableCell align="right">{amountBid}</TableCell>
+												</TableRow>
+											</TableBody>
+										</Table>
+									</TableContainer>
+								</Grid>
+								<Grid item>
+									<TableContainer component={Paper}>
+										<Typography variant="h5">Interest Payment Dates</Typography>
+										<Table sx={{ minWidth: 650 }} aria-label="simple table">
+											<TableHead>
+												<TableRow>
+													<TableCell>Date and Time</TableCell>
+													<TableCell align="right">Amount per unit</TableCell>
+												</TableRow>
+											</TableHead>
+											<TableBody>
+												<TableRow
+													key={1}
+													sx={{
+														"&:last-child td, &:last-child th": { border: 0 },
+													}}
+												>
+													<TableCell component="th" scope="row">
+														{`${new Date(
+															Date.now(),
+														).toDateString()} - ${new Date(
+															Date.now(),
+														).toLocaleTimeString()}`}
+													</TableCell>
+													<TableCell align="right">200</TableCell>
+												</TableRow>
+											</TableBody>
+										</Table>
+									</TableContainer>
+								</Grid>
 							</>
-						): null}
+						) : null}
 					</Grid>
 				</Grid>
 				<Grid item xs={12} md={3}>
