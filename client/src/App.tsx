@@ -17,7 +17,8 @@ const App: FC = () => {
 
 	return (
 		<Router>
-			{isAuthenticated ? <Dashboard path="/*" /> : <Login path="login" />}
+			<Dashboard path="/*" />
+			<Login path="login" />
 		</Router>
 	);
 };

@@ -51,16 +51,12 @@ const RegisterModal: FC<RegisterInfo> = ({ address, isInvestor }) => {
 					resolve(reader.result.toString());
 				}
 			};
-			reader.onerror = (error) => reject(error);
+			reader.onerror = (e) => reject(e);
 		});
 	};
 	const closeSnackbar = () => {
 		if (transactionStatus.isSuccess) {
-			if (isInvestor) {
 				navigate("/dashboard");
-			} else {
-				navigate("/issuer");
-			}
 		}
 	};
 	const formik = useFormik({
@@ -81,20 +77,21 @@ const RegisterModal: FC<RegisterInfo> = ({ address, isInvestor }) => {
 			}
 			const User = Moralis.Object.extend("_User");
 			const query = new Moralis.Query(User);
-			query.equalTo("ethAddress", values.address);
-			const object = await query.first();
+			// query.equalTo("ethAddress", values.address);
+			// const object = await query.first();
+			const object = true;
 			if (object) {
 				const kycFile = new Moralis.File(documents[0]?.name, {
 					base64: await file2Base64(documents[0]),
 				});
-				object.set("isInvestor", isInvestor);
-				object.set("holdingName", values.name);
-				object.set("representativeName", values.representativeName);
-				object.set("representativeContact", values.representativeContact);
-				object.set("representativeAddress", values.representativeAddress);
-				object.set("creditRating", values.creditRating);
-				object.set("representativeKycFile", kycFile);
-				object.save();
+				// object.set("isInvestor", isInvestor);
+				// object.set("holdingName", values.name);
+				// object.set("representativeName", values.representativeName);
+				// object.set("representativeContact", values.representativeContact);
+				// object.set("representativeAddress", values.representativeAddress);
+				// object.set("creditRating", values.creditRating);
+				// object.set("representativeKycFile", kycFile);
+				// object.save();
 				fetch({
 					onSuccess: () => {
 						setTransactionStatus({
