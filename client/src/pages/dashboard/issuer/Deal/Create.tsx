@@ -66,8 +66,7 @@ const CreateDeal: FC<RouteComponentProps> = () => {
 					setTransactionStatus({
 						transactionCompleted: true,
 						isSuccess: true,
-						message:
-							`Upload image success! Check it in here: ${result?._url}`,
+						message: `Upload image success! Check it in here: ${result?._url}`,
 					});
 				},
 			});

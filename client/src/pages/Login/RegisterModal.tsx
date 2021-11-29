@@ -56,7 +56,7 @@ const RegisterModal: FC<RegisterInfo> = ({ address, isInvestor }) => {
 	};
 	const closeSnackbar = () => {
 		if (transactionStatus.isSuccess) {
-				navigate("/dashboard");
+			navigate("/dashboard");
 		}
 	};
 	const formik = useFormik({
