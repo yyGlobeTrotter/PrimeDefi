@@ -3,20 +3,24 @@
 
 ![PrimeDeFi Login](/img/login.png "PrimeDeFi dApp Login Page")
 
+
 ## PrimeDeFi DApp Walkthrough DEMO
 
 A video walking-through of this DApp can be found here:
 (https://youtu.be/8EzMlSz-iHI)
 
+
 ## Project Description
 
 PrimeDeFi is our proposed DeFi protocol operating on smart blockchains. PrimeDeFi envisions a decentralized virtual deal room that ebables debt (such as bonds or loans) issuers to tokenize their deb issuances, and the issuance / book-building processes automated. It also enables investors to bid on any open issuances by connecting to the dApp via their web3 wallets, and manage their own bids and wallet balances within the dapp. PrimeDeFi will eliminate the need of any traditional middlemen, improves efficiency, and revolutionize the capital market fund raising processes for issuers and investors.
+
 
 ### Introduction
 
 This project is an Ethereum Web 3.0 decentralized application (DApp), with smart contracts written in solidity, and user front end written in typescript and javascript.
 
 The essential features include tokenization of newly issued debt instruments and complete end-to-end automation of the debt offering and issuance process. All of the transaction related deals data will be persisted on-chain, with real time settlement and pre-defined time or event triggered actions powered by Chainlink keepers. We also leverage on Chainlink oracle services to port on-chain certain off-chain data feed such as issuer credit rating.
+
 
 ### User Stories
 
@@ -30,52 +34,37 @@ Investors also can deposit into and withdraw from own wallets, review bid status
 
 ![PrimeDeFi Dashboard](/img/dashboard.gif "PrimeDeFi dApp User Dashboard")
 
+
 #### Issuer Dashboard
 
 Issuer dashboard is the first page that issuers will see after they log into PrimeDeFi DApp, from a Web3 enabled browser. It displays everything related to:
 
-- Issuer profile
+- Issuer profile including total value raised, and credit rating
 - A list of past and open issuances from this issuer
 - Details of each issuance as they go through the list
-- All potential actions for issuers to take at every screen (such as set up new issuance, upload documents, start issuance process, etc.)
-- Issuance summary post each issuance closure
-- [Additional screens/actions]
+- Wallet status
+- All potential actions for issuers to take at every screen (such as create new issuance, search for existing issuances, and disconnect wallet)
 
-- **Requirements to Set Up a New Issuer Profile | View:** A cardboard displaying current rules | **Actions:** None
-- **Requirements to Set Up a New Issuance | View:** A cardboard displaying current rules | **Actions:** None
-- **Issuance or issuer account alert | View:** Flash banners showing relevant alert/reminder | **Actions:** Issuers can scroll down to the bottom of the Issuer Dashboard for relevant actions to be taken
-- **Existing and upcoming issuance details | View:** Issuance description, current price, next payment due, current time, etc. | **Actions:** Start Issuance, Special Actions, Copy from Existing Issuance to Set up New One, etc.
-- **New issuance Setup Details | View:** Issuance description, offer size, minimum launch size, offer start date/close date, term, interest rate, payment dates, etc. | **Actions:** Confirm Set Up, Cancel
-- **Open Issuance status | View:** Details of the issuance, Time to closure, # of Bids Received, Total Bids Size, etc. | **Actions:** [Special Actions] etc.
-- **New Issuance summary | View:** Details of the issuance just closed: etc. | **Actions:** None
-- **Additional actions | View:** List of additional actions that issuers can take at their relevant issuance stage and overall monitoring process | **Actions:** Refresh, Set Up New Issuance or Open Issuance Summary
 
 #### Investor Dashboard
 
-Investor dashboard is the first page that investors see after they log into PrimeDeFi from a Web3 MetaMask enabled browser. It displays everything related to:
+Investor dashboard is the first page that investors will see after they log into PrimeDeFi from a Web3 MetaMask enabled browser. It displays everything related to:
 
-- Investment Summary
-- Open issuance details
-- Bid status
+- Search criteria (by bond name, company name, issuer credit rating, or by offer closing date)
+- Existing deal issuance details (organized by currently raising, raised, and completed)
 - Wallet status
-- [Additional actions]
+- All potential actions for investors to take at every screen (such as bid for investment, search for existing issuances, and disconnect wallet)
 
-## Project Architecture and Technical Requirements
+
+## Project Infrastructure & Technical Requirements
+
+![PrimeDeFi Infra](/img/infra.jpb "PrimeDeFi dApp technical infrastruture")
+
 
 ### Solidity Contracts
 
-#### Deal.sol
+![PrimeDeFi Contracts Relationship](/img/infra.jpb "PrimeDeFi dApp smart contract relationship illustration")
 
-This contract is a child of OpenZepplin's `Ownable.sol` contract.
-
-- Contract does not have addresses with DEFAULT_ADMIN role
-- OWNER role is the admin role
-- uses library `SafeMath` to protest against Integer Overflow and Underflow attacks
-
-### Folder Structure
-
-- `root directory`: A standard truffle project structure with `truffle-config.js` to set up smart contract development and deployment environment, and `package.json` to install all necessary dependencies for local contract development.
-- `client/` folder: A standard React based client-side implementation of the project. It was built with `truffle unbox react`.
 
 ## How to Run this DApp
 
@@ -204,9 +193,18 @@ yarn start
 
 ## Tools/Libraries Used to Build/Test this Project
 
-- **Solidity** is used to write the smart contract sitting in the backend
-- ......
-- **Chainlink** is used as off-chain Oracle market data provider
-- ......
+- **Ethereum Solidity** is used to write the smart contract sitting in the backend
+- **Typescript** and **Javascript** are used to wrtie front end web3 compatible scripts
+- **Moralis** is used as front end builder tool
+- **Chainlink** is used as off-chain real world data service provider for on-chain contracts
+- **Remix IDE** and **Truffle** are used as local dev/debug environment for back-end developers
+- **Figma** is used as UI/UX design tool
+- **IPFS** is used as decentralized file storage provider
+- **MetaMask** is used as Web3.0 wallet provider
+- **Moralis** and **Infura** are used as gateways to the blockchains
+- **GitHub** is used as version control tool for all devs
 
-## Unit Tests (*Solidity and JavaScript tests*)
+
+## Test Cases
+
+Test cases are included in PrimeDeFi's main directory in word doc format. It will be migrated into .sol test contracts and .js test scripts later
