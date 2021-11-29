@@ -87,7 +87,16 @@ contract Deal is Owner, KeeperCompatibleInterface {
     event LogCancelDeal(address indexed issuer, string indexed ISIN);
     event LogIssueNewDeal(address indexed issuer,  string indexed ISIN, address token, uint256 finalSize, address[] investors );
 
+    event LogTransferStableCoin(address indexed investor, uint256 amount);
     event LogTransferDealToken(string indexed ISIN, address token, address investorAddr, uint256 tokenAmount);
+
+    event LogInvestorMakeDeposit(address indexed investor, uint256 amount);
+    event LogInvestorWithdraw(address indexed investor, uint256 amount);
+    event LogIssuerWithdraw(address indexed issuer, uint256 amount);
+
+    event LogInvestorMakeBid(address indexed investor, string indexed ISIN, uint256 bid);
+    event LogInvestorEditBid(address indexed investor, string indexed ISIN, uint256 oldBid, uint256 newBid);
+    event LogInvestorCancelBid(address indexed investor, string indexed ISIN, uint256 bid);
 
     //address private owner;          // dapp owner address
     uint256 private balance;        // balance of the Deal contract wallet
@@ -187,7 +196,6 @@ contract Deal is Owner, KeeperCompatibleInterface {
         //uint closeTime = deals[dealISINList[0]].offerCloseTime;
         //string memory toBeClosed;
         //if (block.timestamp >= closeTime) { upkeepNeeded = true; toBeClosed = dealISINList[0]; }
-
         return (upkeepNeeded, abi.encode(toBeClosed));
     }
 
@@ -205,13 +213,13 @@ contract Deal is Owner, KeeperCompatibleInterface {
 
     /**
     * @notice Create issuer & set meta data details
+    * @notice chainlink client function is called here to request issuer credit rating
     */
    function createIssuer(string memory _name) public {
         Issuer storage issuer = issuers[msg.sender];
-        //require(issuer.insert(msg.sender));   // Using my Library IssuerSet here
+        require(issuer.insert(msg.sender));   // Using my Library IssuerSet here
 
         issuer.name = _name;
-
         issuerCount++;
         emit LogCreateIssuer(msg.sender, _name);
         chainLinkClient.requestRating(msg.sender, _name);
@@ -220,13 +228,13 @@ contract Deal is Owner, KeeperCompatibleInterface {
     /**
     * @notice Edit issuer meta data
     */
-    /*function editIssuerMetaData(address _addr, string memory _newName, string memory _newCreditRating) public {
+    function editIssuerMetaData(address _addr, string memory _newName, string memory _newCreditRating) public {
         require(msg.sender == _addr, "DEAL:: editIssuerDetails: Caller is NOT the issuer");
         issuers[_addr].name = _newName;
         issuers[_addr].creditRating = _newCreditRating;
 
         emit LogEditIssuerMetaData(_addr, _newName, _newCreditRating);
-    }*/
+    }
 
     /**
     * @notice Edit issuer details after new deal offer is closed and set to launch
@@ -253,6 +261,9 @@ contract Deal is Owner, KeeperCompatibleInterface {
         _investor.isBidSuccessful[_ISIN] = true;
     }
 
+    /**
+    * @notice Set Chainlink Client to set up oracle services
+    */
     function setChainLinkClient(address _chainLinkClientAddress) external {
         chainLinkClient = IPrimeFiChainLinkClient(_chainLinkClientAddress);
     }
@@ -359,7 +370,6 @@ contract Deal is Owner, KeeperCompatibleInterface {
     * @notice Update details of a deal issuance after it's created & before the offer period is closed
     * @dev For now we do NOT allow issuers to change ISIN and faceValue (to avoid stack too deep)
     */
-    /*
     function editDealIssuance(
         string memory _ISIN,
         string memory _newDealName,
@@ -432,7 +442,6 @@ contract Deal is Owner, KeeperCompatibleInterface {
     /**
     * @notice Edit token meta data for the corresponding issuance
     */
-    /*
     function editTokenMetaData(string memory _ISIN, string memory _newName) public {
         require(msg.sender == deals[_ISIN].issuer, "DEAL:: editTokenDetails: Caller is NOT the issuer");
         require(!deals[_ISIN].isOfferClosed, "DEAL:: editTokenMetaData: Offer period is already closed ");
@@ -440,7 +449,7 @@ contract Deal is Owner, KeeperCompatibleInterface {
         deals[_ISIN].token.name = _newName;
         deals[_ISIN].token.symbol = _ISIN;
         emit LogEditTokenMetaData( msg.sender, _ISIN, _newName );
-    } */
+    }
 
     // ====================================================
     /**
@@ -497,7 +506,7 @@ contract Deal is Owner, KeeperCompatibleInterface {
     }
 
     /**
-    * @notice Step 1 - Close deal offering (book-building) process;
+    * @notice Step 1 - Close deal offering (book-building) process after dealCloseTime is crossed
     *         Step 2 - Decide whether to launch the official issuance period, or cancel;
     *         Step 3 - Mint DealToken for the issuance, calculate investor allocation then allocate accordingly;
     *         Step 4 - Transfer investor fund to escrow account & the rest to issuer wallet;
@@ -545,7 +554,7 @@ contract Deal is Owner, KeeperCompatibleInterface {
                     adjustInvestorAllocation(_ISIN, finalAllocation, investorAddr);
                 }
                 // deal token & investment stablecoin transfer
-                //transferStableCoin(_ISIN, investorAddr, finalAllocation);
+                transferStableCoin(_ISIN, investorAddr, finalAllocation);
                 transferStableCoin(investorAddr, finalAllocation);
                 transferDealToken(_ISIN, investorAddr, finalAllocation);
                 editInvestorDetailsPostNewIssuance(_ISIN, investors[investorAddr]);
@@ -579,7 +588,6 @@ contract Deal is Owner, KeeperCompatibleInterface {
     */
     function adjustInvestorAllocation(string memory _ISIN, uint256 _finalAllocation, address _investorAddr) internal {
         Investor storage investor = investors[_investorAddr];
-
         investor.totalBalance = helper.safeSub(investor.totalBalance, _finalAllocation);
         investor.totalLockedInBid = helper.safeSub(investor.totalLockedInBid, investor.lockedInBid[_ISIN]);
         investor.availBalance = helper.safeSub(investor.totalBalance, investor.totalLockedInBid);
@@ -592,7 +600,8 @@ contract Deal is Owner, KeeperCompatibleInterface {
     function transferStableCoin(address _investorAddr, uint256 _allocation) internal {
         // transfer investor fund to dapp wallet, and assuming
         //   the owner of stablecoin tracker account has approved & given alllowance to investor wallet
-        //ERC20(USDC).transferFrom(_investorAddr, address(this), _allocation);
+        ERC20(USDC).transferFrom(_investorAddr, address(this), _allocation);
+        emit LogTransferStableCoin(_investorAddr, _allocation);
     }
 
     /**
@@ -604,7 +613,6 @@ contract Deal is Owner, KeeperCompatibleInterface {
         uint256 tokenAmount = helper.safeDiv(_allocation, deal.faceValue);
 
         manager.transfer(tokenAddr, _investorAddr, tokenAmount);
-
         emit LogTransferDealToken(_ISIN, tokenAddr, _investorAddr, tokenAmount);
     }
 
@@ -618,7 +626,6 @@ contract Deal is Owner, KeeperCompatibleInterface {
 
     /**
     * @notice Mint a new token for the new issuance
-    * @dev TODOItem - might need to change to private function later
     */
     function mintToken(string memory _ISIN, address _issuerAddr) internal {
         require(msg.sender == _issuerAddr, "DEAL:: mintToken: Caller is NOT the issuer");
@@ -642,21 +649,19 @@ contract Deal is Owner, KeeperCompatibleInterface {
 
     /**
     * @notice Investor deposit stablecoin fund (USDC) into the dapp
-    * @dev Implement USDC transfer here after getting some test USDCs
     */
-    //function investorMakeDeposit(IERC20 _stableCoin, uint256 _amount) public {
     function investorMakeDeposit(uint256 _amount) public {
-        //ERC20(USDC).transfer(address(this), _amount);
+        ERC20(USDC).transfer(address(this), _amount);
         Investor storage investor = investors[msg.sender];
 
         investor.totalBalance = helper.safeAdd( investor.totalBalance, _amount );
         investor.availBalance = helper.safeAdd( investor.availBalance, _amount );
 
         // Call library InvestorSet to see if investor already exists
-        //if(investor.insert(msg.sender)) {
+        if(investor.insert(msg.sender)) {
             totalInvestorCount++;
-        //}
-        //emit helper.LogInvestorMakeDeposit(msg.sender, _amount);
+        }
+        emit LogInvestorMakeDeposit(msg.sender, _amount);
     }
 
     /**
@@ -672,9 +677,9 @@ contract Deal is Owner, KeeperCompatibleInterface {
 
         deal.totalInvestorBid = helper.safeAdd(deal.totalInvestorBid, _bidAmount);
 
-//investor.dealsBidId[investor.dealsBidCount] = ISINtoId[_ISIN];
-//investor.dealsBidISIN[investor.dealsBidCount] = _ISIN;
-//investor.dealsBidCount++;
+        investor.dealsBidId[investor.dealsBidCount] = ISINtoId[_ISIN];
+        investor.dealsBidISIN[investor.dealsBidCount] = _ISIN;
+        investor.dealsBidCount++;
 
         investor.totalLockedInBid = helper.safeAdd(investor.totalLockedInBid, _bidAmount);
         investor.availBalance = helper.safeSub(investor.totalBalance, investor.totalLockedInBid);
@@ -683,13 +688,13 @@ contract Deal is Owner, KeeperCompatibleInterface {
         deal.investors.push() = msg.sender;
         deal.investorCount++;
         deal.investorAlreadyBid[msg.sender] = true;
-        //*** emit helper.LogInvestorMakeBid(); ***
+
+        emit LogInvestorMakeBid(msg.sender, _ISIN, _bidAmount);
     }
 
     /**
     * @notice Investor gets details of a bid made earlier
     */
-    /*
     function getBidDetails(string memory _ISIN, address _addr) public view returns(
         bool isClosed,
         bool isSuccessful,
@@ -702,13 +707,12 @@ contract Deal is Owner, KeeperCompatibleInterface {
             investor.isBidSuccessful[_ISIN],
             investor.lockedInBid[_ISIN]
         );
-    } */
+    }
 
     /**
     * @notice Investor edits an already-placed bid
     * @dev this is only allowed before deal offer period is closed
     */
-    /*
     function investorEditBid(string memory _ISIN, uint256 _newBidAmount) public {
         DealIssuance storage deal = deals[_ISIN];
         Investor storage investor = investors[msg.sender];
@@ -726,14 +730,14 @@ contract Deal is Owner, KeeperCompatibleInterface {
         investor.availBalance = helper.safeSub( investor.totalBalance, investor.totalLockedInBid );
 
         investor.lockedInBid[_ISIN] = _newBidAmount;
-        //*** emit helper.LogInvestorEditBid(); ***
-    } */
+
+        emit LogInvestorEditBid(msg.sender, _ISIN, oldBid, _newBidAmount);
+    }
 
     /**
     * @notice Investor cancels a bid s/he made earlier
     * @dev this is only allowed when the deal's offer period is live & when there's an existing bid made by the investor
     */
-/*
     function investorCancelBid(string memory _ISIN) public {
         DealIssuance storage deal = deals[_ISIN];
         Investor storage investor = investors[msg.sender];
@@ -744,29 +748,28 @@ contract Deal is Owner, KeeperCompatibleInterface {
         uint256 bid = investor.lockedInBid[_ISIN];
         deal.totalInvestorBid = helper.safeSub(deal.totalInvestorBid, bid);
 
-    for (uint i = 0; i < investor.dealsBidCount; i++) {
-        if (investor.dealsBidId[i] == ISINtoId[_ISIN]) {
-            delete investor.dealsBidId[i];
-            delete investor.dealsBidISIN[i];
+        for (uint i = 0; i < investor.dealsBidCount; i++) {
+            if (investor.dealsBidId[i] == ISINtoId[_ISIN]) {
+                delete investor.dealsBidId[i];
+                delete investor.dealsBidISIN[i];
+            }
         }
-    }
-    investor.dealsBidCount--;
+        investor.dealsBidCount--;
 
         investor.totalLockedInBid = helper.safeSub(investor.totalLockedInBid, bid);
         investor.availBalance = helper.safeAdd(investor.availBalance, bid);
         investor.lockedInBid[_ISIN] = 0;
 
-    for (uint j = 0; j < deal.investorCount; j++) {
-        if (deal.investors[j] == msg.sender) {
-            delete deal.investors[j];
+        for (uint j = 0; j < deal.investorCount; j++) {
+            if (deal.investors[j] == msg.sender) {
+                delete deal.investors[j];
+            }
         }
-    }
-    deal.investorCount--;
-    deal.investorAlreadyBid[msg.sender] = false;
+        deal.investorCount--;
+        deal.investorAlreadyBid[msg.sender] = false;
 
-        //*** emit helper.LogInvestorCancelBid(); ***
+        emit LogInvestorCancelBid(msg.sender, _ISIN, bid);
     }
-*/
 
 
     function investorWithdraw(address _addr, uint256 _amount) public {
