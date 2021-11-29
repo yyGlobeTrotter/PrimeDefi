@@ -58,12 +58,12 @@ Investor dashboard is the first page that investors will see after they log into
 
 ## Project Infrastructure & Technical Requirements
 
-![PrimeDeFi Infra](/img/infra.jpb "PrimeDeFi dApp technical infrastruture")
+![PrimeDeFi Infra](/img/infra.jpg "PrimeDeFi dApp technical infrastruture")
 
 
 ### Solidity Contracts
 
-![PrimeDeFi Contracts Relationship](/img/infra.jpb "PrimeDeFi dApp smart contract relationship illustration")
+![PrimeDeFi Contracts Relationship](/img/infra.jpg "PrimeDeFi dApp smart contract relationship illustration")
 
 
 ## How to Run this DApp
