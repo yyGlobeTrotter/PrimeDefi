@@ -4,8 +4,7 @@ pragma solidity 0.8.0;
 
 //import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/security/Pausable.sol";
 //import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/security/ReentrancyGuard.sol";
-//import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/access/Ownable.sol";
-
+import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/access/Ownable.sol";
 import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/math/Math.sol";
 //import "@openzeppelin/contracts/utils/math/Math.sol";
 
@@ -28,73 +27,69 @@ interface IDeal {
 /**
  * @title Deal
  * @author 0xYue
- * @notice This contract represents the entire deal issuance book-building process (incl creation of new deals and minting/allocation of the deal token
+ * @author Pavel - for contribution made to all chainlink oracle related code
+ * @notice This contract represents the entire deal issuance book-building process (incl creation of new deals and minting/allocation of the deal token)
  * @dev USDC stablecoin tracker address needs to be changed to Ethereum mainnet when we're ready to deploy
- * @dev To link libraries developed to check existing issuer/investor/deal before adding new ones with this main contract!!
- * @dev Oversized now!!! Must break this into a few separate contracts such as Helper functions, event interface, etc.
- * @dev To add @param to all sub-functions
- * @dev To implement all Ownable and Pausible functions
+ * @dev To run gas optimization and security audit
+ * @dev To link the 3 customized libraries
+ * @dev To break this into a few separate pieces to reduce file size
+ * @dev To implement Pausible & ReentrancyGuard functions for added security measure
  * @dev To finalize all events and Modifiers
- * @dev To check and finalize all function visibilities
- * @dev To implement more search functions
- * @dev To use SafeMath at all places (incl ++ calculations)
- * @dev To change to SafeERC20 functions later
- * @dev To integrate with Chainlink oracle adaptor; Done with keepers
- * @dev To implement decimals to our DealToken
- * @dev To implement global fee
+ * @dev To implement more getter functions with different criteria
+ * @dev To upgrade from ERC20 to SafeERC20 later
  */
-contract Deal is KeeperCompatibleInterface {
+contract Deal is Owner, KeeperCompatibleInterface {
     using SafeMath for uint256;
     using SafeMath for uint;
 
-    //using IssuerSet for Issuer;
-    //using DealSet for DealIssuance;
-    //using InvestorSet for Investor;
+    using IssuerSet for Issuer;
+    using DealSet for DealIssuance;
+    using InvestorSet for Investor;
 
-    event LogCreateIssuer(address indexed _issuer, string _name);
-    event LogEditIssuerMetaData(address indexed _issuer, string _name, string _creditRating);
+    event LogCreateIssuer(address indexed issuer, string name);
+    event LogEditIssuerMetaData(address indexed issuer, string name, string creditRating);
 
     event LogCreateDealIssuance(
-        address indexed _issuer,
-        string indexed _ISIN,
-        string _dealName,
-        uint256 _initSize,
-        uint256 _minSize,
-        uint256 _faceValue,
-        uint256 _offerPrice,
-        uint _offerStartTime,
-        uint _offerCloseTime,
-        uint256 _term,
-        uint256 _interestRate,
-        uint[] _interestPaymentDates,
-        uint256 _upfrontFee
+        address indexed issuer,
+        string indexed ISIN,
+        string dealName,
+        uint256 initSize,
+        uint256 minSize,
+        uint256 faceValue,
+        uint256 offerPrice,
+        uint offerStartTime,
+        uint offerCloseTime,
+        uint256 term,
+        uint256 interestRate,
+        uint[] interestPaymentDates,
+        uint256 upfrontFee
         //uint256 _escrowRatio
     );
 
     event LogEditDealIssuance(
-        address indexed _issuer,
-        string indexed _ISIN,
-        string _newDealName,
-        uint256 _newInitSize,
-        uint256 _newMinSize,
-        uint256 _newOfferPrice,
-        uint _newOfferCloseTime,
-        uint256 _newTerm,
-        uint256 _newInterestRate,
-        uint[] _newInterestPaymentDates,
-        uint256 _newUpfrontFee,
-        uint256 _newEscrowRatio
+        address indexed issuer,
+        string indexed ISIN,
+        string newDealName,
+        uint256 newInitSize,
+        uint256 newMinSize,
+        uint256 newOfferPrice,
+        uint newOfferCloseTime,
+        uint256 newTerm,
+        uint256 newInterestRate,
+        uint[] newInterestPaymentDates,
+        uint256 newUpfrontFee,
+        uint256 newEscrowRatio
     );
 
-    event LogEditTokenMetaData(address indexed _issuer, string indexed _ISIN, string _newName);
-    event LogCreateToken(address indexed _issuer, string indexed _ISIN, string _name, string _symbol, uint256 _totalSupply);
+    event LogEditTokenMetaData(address indexed issuer, string indexed ISIN, string newName);
+    event LogCreateToken(address indexed issuer, string indexed ISIN, string name, string symbol, uint256 totalSupply);
 
-    event LogCancelDeal(address indexed _issuer, string indexed _ISIN);
-    event LogIssueNewDeal(address indexed _issuer,  string indexed _ISIN, address _token, uint256 _finalSize, address[] _investors );
+    event LogCancelDeal(address indexed issuer, string indexed ISIN);
+    event LogIssueNewDeal(address indexed issuer,  string indexed ISIN, address token, uint256 finalSize, address[] investors );
 
-    event LogTransferDealToken(string indexed _ISIN, address _token, address _investorAddr, uint256 _tokenAmount);
+    event LogTransferDealToken(string indexed ISIN, address token, address investorAddr, uint256 tokenAmount);
 
-    address private owner;          // dapp owner address
+    //address private owner;          // dapp owner address
     uint256 private balance;        // balance of the Deal contract wallet
     uint256 private globalFee;              // this is the fee our dapp charges; Assume a flat 5% of total issue size for now
     uint256 private feeRateDecimal;         // use 3 for now
@@ -132,21 +127,11 @@ contract Deal is KeeperCompatibleInterface {
     // Chainlinnk oracle smart contract deployed on Kovan by Pavel
     address public constant oracleContract = 0x0cfd0c62496a623eD06563422EA03B7b768e5D73;
 
-
     IPrimeFiChainLinkClient chainLinkClient;
+
     // =========================
     /// PLACEHOLDER for Modifiers
     /*
-    modifier isOfferLive(bytes32 memory _ISIN) {
-        require(deals[_ISIN].isOfferLive, "Issuance offer period is NOT live");
-        _;
-    }
-
-    modifier isOfferClosed(bytes32 memory _ISIN) {
-        require(deals[_ISIN].isOfferClosed, "Issuance offer period is NOT closed yet");
-        _;
-    }
-
     modifier inState(DealIssuance storage _deal, State _state) {
         require(
             _deal.state == _state,
@@ -159,7 +144,7 @@ contract Deal is KeeperCompatibleInterface {
      * @notice Constructor
      */
     constructor() {
-        owner = msg.sender;
+        //owner = msg.sender;
         globalFee = 5000;   // this represents 5% when feeRateDecimal = 3 (for now)
         feeRateDecimal = 3;
         percentageDecimal = 2;
@@ -172,46 +157,51 @@ contract Deal is KeeperCompatibleInterface {
         balance += msg.value;
     }
 */
-
-function checkUpkeep(bytes calldata /* checkData */) external view override returns (bool, bytes memory) {
-    string[] memory toBeClosed = new string[](dealCount);
-    uint256 count;
-    string memory dealISIN;
-    DealIssuance storage deal;
-    bool upkeepNeeded;
-
-    for (uint256 i = 0; i < dealCount; i++) {
-        dealISIN = dealISINList[i];
-        deal = deals[dealISIN];
-        if (block.timestamp >= deal.offerCloseTime) {
-            upkeepNeeded = true;
-            toBeClosed[count] = dealISIN;
-            count++;
-        }
-    }
-    //uint closeTime = deals[dealISINList[0]].offerCloseTime;
-    //string memory toBeClosed;
-    //if (block.timestamp >= closeTime) { upkeepNeeded = true; toBeClosed = dealISINList[0]; }
-
-    return (upkeepNeeded, abi.encode(toBeClosed));
-}
-
-function performUpkeep(bytes calldata performData) external override {
-    string[] memory toBeClosed = abi.decode(performData, (string[]));
-    //string memory toBeClosed = abi.decode(performData, (string));
-    //closeDealOffering(toBeClosed);
-    for (uint256 i = 0; i < toBeClosed.length; i++) {
-        closeDealOffering(toBeClosed[i]);
-    }
-}
-
     /**
-     * @dev Contract Destructor - Mortal design pattern to destroy contract and remove from blockchain
+     * @notice Contract Destructor - Mortal design pattern to destroy contract and remove from blockchain
      *
     function kill() public onlyOwner {
         selfdestruct(address(uint160(owner()))); /// cast owner to address payable
     }
-    */
+*/
+
+    /**
+     * @notice Chainlink keepers checkUpkeep function
+     */
+    function checkUpkeep(bytes calldata /* checkData */) external view override returns (bool, bytes memory) {
+        string[] memory toBeClosed = new string[](dealCount);
+        uint256 count;
+        string memory dealISIN;
+        DealIssuance storage deal;
+        bool upkeepNeeded;
+
+        for (uint256 i = 0; i < dealCount; i++) {
+            dealISIN = dealISINList[i];
+            deal = deals[dealISIN];
+            if (block.timestamp >= deal.offerCloseTime) {
+                upkeepNeeded = true;
+                toBeClosed[count] = dealISIN;
+                count++;
+            }
+        }
+        //uint closeTime = deals[dealISINList[0]].offerCloseTime;
+        //string memory toBeClosed;
+        //if (block.timestamp >= closeTime) { upkeepNeeded = true; toBeClosed = dealISINList[0]; }
+
+        return (upkeepNeeded, abi.encode(toBeClosed));
+    }
+
+    /**
+     * @notice Chainlink keepers performUpkeep function
+     */
+    function performUpkeep(bytes calldata performData) external override {
+        string[] memory toBeClosed = abi.decode(performData, (string[]));
+        //string memory toBeClosed = abi.decode(performData, (string));
+        //closeDealOffering(toBeClosed);
+        for (uint256 i = 0; i < toBeClosed.length; i++) {
+            closeDealOffering(toBeClosed[i]);
+        }
+    }
 
     /**
     * @notice Create issuer & set meta data details
