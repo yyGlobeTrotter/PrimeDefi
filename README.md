@@ -6,38 +6,37 @@
 ## PrimeDeFi DApp Walkthrough DEMO
 
 A video walking-through of this DApp can be found here:
-[PrimeDeFi DApp MVP1.0] (https://youtu.be/8EzMlSz-iHI)
+(https://youtu.be/8EzMlSz-iHI)
 
 ## Project Description
 
-PrimeDeFi is our proposed DeFi protocol operating on smart blockchains. PrimeDeFi envisions a decentralized virtual deal room that allows issuers to tokenize debt instruments and automate issuance / book-building processes, and investors to bid to invest in new issuances and manage own wallets, all on blockchain, with real time on-chain settlement and event alert. PrimeDeFi eliminates the need of any traditional middleman (such as 3rd party underwrter, custodian or escrow agent)
+PrimeDeFi is our proposed DeFi protocol operating on smart blockchains. PrimeDeFi envisions a decentralized virtual deal room that ebables debt (such as bonds or loans) issuers to tokenize their deb issuances, and the issuance / book-building processes automated. It also enables investors to bid on any open issuances by connecting to the dApp via their web3 wallets, and manage their own bids and wallet balances within the dapp. PrimeDeFi will eliminate the need of any traditional middlemen, improves efficiency, and revolutionize the capital market fund raising processes for issuers and investors.
 
 ### Introduction
 
-This project is an Ethereum Web 3.0 decentralized application (DApp).
+This project is an Ethereum Web 3.0 decentralized application (DApp), with smart contracts written in solidity, and user front end written in typescript and javascript.
 
-It allows XXXXXXXXXX
-
-- Issuers can XXXXXX
-- Investors can XXXXXX
+The essential features include tokenization of newly issued debt instruments and complete end-to-end automation of the debt offering and issuance process. All of the transaction related deals data will be persisted on-chain, with real time settlement and pre-defined time or event triggered actions powered by Chainlink keepers. We also leverage on Chainlink oracle services to port on-chain certain off-chain data feed such as issuer credit rating.
 
 ### User Stories
 
-Through their dashboards, issuers can add wallet, view/manage wallet/treasury, create/edit issuances, view a list of all issuances, view/monitor individual issuance, view investor list, etc.
+Through their dashboards, **issuers** can view/manage their wallet balances (only USDC stablecoin and our own ERC20 deal tokens are allowed at this time), create/edit deal issuances, search/view a list of existing deal issuances, and monitor deal's fund raising progress (total raised vs offer sizie).
 
-[Optional] Issuers also can view/edit their profiles, upload/manage documents, etc.
+Issuers also can view/edit their profiles, and upload/manage documents via IPFS.
 
-Through their dashboards, investors can browse through a list of open issuances, check on relevant documents and issuance criteria. select the ones interested and make bids for investments
+Through their dashboards, **investors** can browse through a list of open issuances, check on relevant documents and issuance criteria. select the ones interested and make bids for investments
 
-Investors also can deposit into and withdraw from own wallets, review bid status and final result, and monitor wallet balance
+Investors also can deposit into and withdraw from own wallets, review bid status and final result, and monitor wallet balances.
+
+![PrimeDeFi Dashboard](/img/dashboard.gif "PrimeDeFi dApp User Dashboard")
 
 #### Issuer Dashboard
 
-Issuer dashboard is the first page that issuers see after they log into PrimeDeFi DApp, from a Web3 enabled browser. It displays everything related to:
+Issuer dashboard is the first page that issuers will see after they log into PrimeDeFi DApp, from a Web3 enabled browser. It displays everything related to:
 
 - Issuer profile
-- A list of past and open issuances from this issuer, and account alert/reminder if any
-- Details of each issuance after they click on the relevant link
+- A list of past and open issuances from this issuer
+- Details of each issuance as they go through the list
 - All potential actions for issuers to take at every screen (such as set up new issuance, upload documents, start issuance process, etc.)
 - Issuance summary post each issuance closure
 - [Additional screens/actions]
