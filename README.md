@@ -7,7 +7,7 @@
 ## PrimeDeFi DApp Walkthrough DEMO
 
 A video walking-through of this DApp can be found here:
-(https://youtu.be/8EzMlSz-iHI)
+(TBD)
 
 
 ## Project Description
